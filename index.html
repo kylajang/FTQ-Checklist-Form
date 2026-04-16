@@ -255,7 +255,7 @@ function buildTemplate(taskCode) {
   });
   const edit = (suffix, seq) => ({
     code:`${p}-${suffix}`, label:'', seq, typeId:'2', locked:false, isEdit:true,
-    mandatory:0, mandatoryImage:0, mandatoryObs:0, mandatoryNotes:0,
+    mandatory:1, mandatoryImage:0, mandatoryObs:0, mandatoryNotes:0,
     autosuggest:'', visibilityFormula:'', hide:0
   });
 
@@ -461,7 +461,7 @@ function startEditor() {
   openSections.add(0);
 
   TEMPLATE.filter(t => t.isEdit).forEach(t => {
-    state[t.code] = {label:'',typeId:'2',mandatory:0,mandatoryImage:0,mandatoryObs:0,autosuggest:'',visibilityFormula:'',hide:0};
+    state[t.code] = {label:'',typeId:'2',mandatory:1,mandatoryImage:0,mandatoryObs:0,autosuggest:'',visibilityFormula:'',hide:0};
   });
 
   const name = CHECKLIST_NAMES[val] || TASK_CODE;
