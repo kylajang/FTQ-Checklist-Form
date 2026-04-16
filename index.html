@@ -186,6 +186,11 @@
           </label>
         </div>
       </div>
+      <div style="margin-top:14px">
+        <label class="selector-label" for="custom-measure-input">Specific Measure Name</label>
+        <input type="text" id="custom-measure-input" placeholder="e.g. Heat Pump Ductless" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none;background:white;" />
+        <p style="font-size:11px;color:var(--text3);margin-top:5px;">Used in section headers like "Existing Heat Pump Ductless Section"</p>
+      </div>
     </div>
     <button class="selector-btn" id="start-btn" disabled onclick="startEditor()">Start &#8594;</button>
   </div>
@@ -247,10 +252,13 @@ const CHECKLIST_NAMES = {
   'CUSTOM': 'Custom Checklist'
 };
 
+// Stores the user-entered measure name for custom checklists
+let CUSTOM_MEASURE = '';
+
 // Extract measure name from checklist name, e.g. "Heat Pump Ductless [HEAR Inspection]" -> "Heat Pump Ductless"
 function getMeasureName(taskCode) {
+  if (CUSTOM_MEASURE) return CUSTOM_MEASURE;
   const fullName = CHECKLIST_NAMES[taskCode] || '';
-  // Strip the bracketed program suffix e.g. "[HEAR Inspection]" or "[HOMES Inspection]"
   const stripped = fullName.replace(/\s*\[.*?\]\s*$/,'').trim();
   return stripped || 'Specific Measure';
 }
@@ -477,15 +485,16 @@ function startEditor() {
   const val = document.getElementById('checklist-select').value;
   if (!val) return;
 
-  let templateType = 'Q'; // default QCON for all named checklists
+  let templateType = 'Q';
   if (val === 'CUSTOM') {
     const code = document.getElementById('custom-code-input').value.trim();
     TASK_CODE = code || 'CUSTOM-Q';
     templateType = document.querySelector('input[name="custom-type"]:checked').value;
+    CUSTOM_MEASURE = document.getElementById('custom-measure-input').value.trim();
   } else {
     TASK_CODE = val;
-    // Named checklists ending in -V use PVI template
     templateType = val.endsWith('-V') ? 'V' : 'Q';
+    CUSTOM_MEASURE = '';
   }
 
   TEMPLATE = templateType === 'V' ? buildPVITemplate(TASK_CODE) : buildTemplate(TASK_CODE);
@@ -520,6 +529,8 @@ function goHome() {
   document.getElementById('checklist-select').value = '';
   document.getElementById('custom-name-row').style.display = 'none';
   document.getElementById('start-btn').disabled = true;
+  document.getElementById('custom-measure-input').value = '';
+  CUSTOM_MEASURE = '';
 }
 
 // ---- TEMPLATE HELPERS ----
