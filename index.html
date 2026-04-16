@@ -1055,7 +1055,7 @@ function exportCSV() {
   const blob = new Blob([rows.join('\n')],{type:'text/csv'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url; a.download = `${TASK_CODE}_checklist.csv`; a.click();
+  a.href = url; a.download = `${TASK_CODE}_checkpoints.csv`; a.click();
   URL.revokeObjectURL(url);
 }
 </script>
