@@ -247,10 +247,18 @@ const CHECKLIST_NAMES = {
   'CUSTOM': 'Custom Checklist'
 };
 
-// Build template rows for a given task code
-// All 6 named checklists use the QCON structure (same as 21-HVC-15-Q)
+// Extract measure name from checklist name, e.g. "Heat Pump Ductless [HEAR Inspection]" -> "Heat Pump Ductless"
+function getMeasureName(taskCode) {
+  const fullName = CHECKLIST_NAMES[taskCode] || '';
+  // Strip the bracketed program suffix e.g. "[HEAR Inspection]" or "[HOMES Inspection]"
+  const stripped = fullName.replace(/\s*\[.*?\]\s*$/,'').trim();
+  return stripped || 'Specific Measure';
+}
+
+// Build QCON template rows for a given task code
 function buildTemplate(taskCode) {
-  const p = taskCode; // prefix
+  const p = taskCode;
+  const m = getMeasureName(taskCode); // e.g. "Heat Pump Ductless"
   const locked = (code, label, seq, typeId, opts) => ({
     code, label, seq, typeId, locked:true,
     mandatory:0, mandatoryImage:0, mandatoryObs:0, mandatoryNotes:0,
@@ -278,7 +286,7 @@ function buildTemplate(taskCode) {
     locked(`${p}-165`,'If the installation area is not free and clear, upload photo documentation.',165,'2',{mandatoryImage:1,visibilityFormula:`AND( CP("${p}-160") = "NO"; CP_VISIBLE("${p}-160"))`}),
     locked(`${p}-170`,'Are there any signs of damage near the work area?',170,'2',{mandatory:1,autosuggest:'YESNO',visibilityFormula:`AND( CP("${p}-145") = "MULTI-FAMILY"; CP_VISIBLE("${p}-145"))`}),
     locked(`${p}-175`,'If YES, describe the damage near the work area and upload photo documentation.',175,'2',{mandatory:1,mandatoryImage:1,mandatoryObs:1,visibilityFormula:`AND( CP("${p}-170") = "YES"; CP_VISIBLE("${p}-170"))`}),
-    edit('180',180), edit('185',185), edit('190',190), edit('195',195),
+    edit('180',180), edit('185',185), edit('190',190), edit('195',195), edit('198',198),
     // Purchased Equipment
     locked(`${p}-200`,'Purchased Equipment Section',200,'1'),
     locked(`${p}-205`,'This section records equipment and purchase information needed for state & federal reporting.',205,'21'),
@@ -292,44 +300,39 @@ function buildTemplate(taskCode) {
     locked(`${p}-250`,'Record the AHRI Reference Number.',250,'2',{mandatory:1,mandatoryObs:1}),
     locked(`${p}-255`,'Record how many of the items were installed.',255,'2',{mandatory:1,mandatoryObs:1,isAOButtons:1}),
     locked(`${p}-260`,'Record the annual energy use estimated on the EnergyGuide label. (kWh/yr)',260,'2',{mandatory:1,mandatoryObs:1}),
-    edit('265',265), edit('270',270), edit('275',275), edit('280',280),
-    edit('285',285), edit('290',290), edit('295',295),
+    edit('265',265), edit('270',270), edit('275',275), edit('280',280), edit('285',285),
     // Existing Measure
-    locked(`${p}-300`,'Existing [Specific Measure] Section',300,'1'),
-    locked(`${p}-305`,'What is the type/fuel type of the existing [Specific Measure]?',305,'2',{mandatory:1}),
-    locked(`${p}-310`,'What is the storage capacity/BTU/wattage/etc of the existing [Specific Measure]?',310,'2',{mandatory:1}),
-    locked(`${p}-315`,'Take a photo of the existing [Specific Measure].',315,'2',{mandatory:1,mandatoryImage:1}),
-    locked(`${p}-320`,'Take a close-up photo of the nameplate showing the model number and serial number of the existing [Specific Measure].',320,'2',{mandatory:1,mandatoryImage:1}),
-    edit('325',325), edit('330',330), edit('335',335), edit('340',340),
-    edit('345',345), edit('350',350), edit('355',355), edit('360',360),
-    edit('365',365), edit('370',370), edit('375',375), edit('380',380),
-    edit('385',385), edit('390',390), edit('395',395),
+    locked(`${p}-300`,`Existing ${m} Section`,300,'1'),
+    locked(`${p}-305`,`What is the type/fuel type of the existing ${m}?`,305,'2',{mandatory:1}),
+    locked(`${p}-310`,`What is the storage capacity/BTU/wattage/etc of the existing ${m}?`,310,'2',{mandatory:1}),
+    locked(`${p}-315`,`Take a photo of the existing ${m}.`,315,'2',{mandatory:1,mandatoryImage:1}),
+    locked(`${p}-320`,`Take a close-up photo of the nameplate showing the model number and serial number of the existing ${m}.`,320,'2',{mandatory:1,mandatoryImage:1}),
+    edit('325',325), edit('330',330), edit('335',335), edit('340',340), edit('345',345),
     // Pre-Installation
     locked(`${p}-400`,'Pre-Installation Section',400,'1'),
-    locked(`${p}-405`,'Take a wide-angle photo of the space where the [Specific Measure] will be installed.',405,'2',{mandatory:1,mandatoryImage:1}),
-    locked(`${p}-410`,'Take a close-up photo of the nameplate showing model/serial of newly installed [Specific Measure].',410,'2',{mandatory:1,mandatoryImage:1}),
+    locked(`${p}-405`,`Take a wide-angle photo of the space where the ${m} will be installed.`,405,'2',{mandatory:1,mandatoryImage:1}),
+    locked(`${p}-410`,`Take a close-up photo of the nameplate showing model/serial of the newly installed ${m}.`,410,'2',{mandatory:1,mandatoryImage:1}),
     locked(`${p}-415`,'Take a photo of the circuit breaker that powers the new appliance.',415,'2',{mandatory:1,mandatoryImage:1}),
     locked(`${p}-420`,'Take a photo of the gas pipe showing it is off and capped.',420,'2',{mandatory:1,mandatoryImage:1}),
-    edit('425',425), edit('430',430), edit('435',435), edit('440',440),
-    edit('445',445), edit('450',450), edit('455',455), edit('460',460),
-    edit('465',465), edit('470',470), edit('475',475), edit('480',480),
-    edit('485',485), edit('490',490), edit('495',495),
+    edit('425',425), edit('430',430), edit('435',435), edit('440',440), edit('445',445),
     // Installation
-    locked(`${p}-500`,'[Specific Measure] Installation Section',500,'1'),
-    locked(`${p}-505`,'What is the type/fuel type of the newly installed [Specific Measure]?',505,'2',{mandatory:1}),
-    locked(`${p}-510`,'What is the storage capacity/BTU/wattage/etc of the newly installed [Specific Measure]?',510,'2',{mandatory:1}),
-    locked(`${p}-515`,'Take a photo of the newly installed [Specific Measure].',515,'2',{mandatory:1,mandatoryImage:1}),
-    locked(`${p}-525`,'Take a photo showing the [Specific Measure] plugged in or connected to the electric panel.',525,'2',{mandatory:1,mandatoryImage:1}),
-    locked(`${p}-530`,'Take a photo of the condensate drain location for the [Specific Measure].',530,'2',{mandatory:1,mandatoryImage:1}),
-    edit('535',535), edit('540',540), edit('545',545), edit('550',550),
-    edit('555',555), edit('560',560), edit('565',565), edit('570',570),
-    edit('575',575), edit('580',580), edit('585',585), edit('590',590),
-    edit('595',595), edit('605',605),
-    // Post-Installation
-    locked(`${p}-800`,'Post-Installation Section',800,'1'),
-    locked(`${p}-805`,'Take a wide-angle photo of the completed [Specific Measure] installation.',805,'2',{mandatory:1,mandatoryImage:1}),
-    locked(`${p}-810`,'Take a photo of the cleaned-up installation area before you leave.',810,'2',{mandatory:1,mandatoryImage:1}),
-    edit('815',815), edit('820',820), edit('825',825), edit('830',830), edit('835',835),
+    locked(`${p}-500`,`${m} Installation Section`,500,'1'),
+    locked(`${p}-505`,`What is the type/fuel type of the newly installed ${m}?`,505,'2',{mandatory:1}),
+    locked(`${p}-510`,`What is the storage capacity/BTU/wattage/etc of the newly installed ${m}?`,510,'2',{mandatory:1}),
+    locked(`${p}-515`,`Take a photo of the newly installed ${m}.`,515,'2',{mandatory:1,mandatoryImage:1}),
+    locked(`${p}-525`,`Take a photo showing the ${m} plugged in or connected to the electric panel.`,525,'2',{mandatory:1,mandatoryImage:1}),
+    locked(`${p}-530`,`Take a photo of the condensate drain location for the ${m}.`,530,'2',{mandatory:1,mandatoryImage:1}),
+    edit('535',535), edit('540',540), edit('545',545), edit('550',550), edit('555',555),
+    // Post-Inspection PNNL
+    locked(`${p}-700`,'Post-Inspection PNNL Section',700,'1'),
+    locked(`${p}-705`,'Does the Ambient CO Test Pass? (PNNL)',705,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
+    locked(`${p}-710`,'Has an ASHRAE 62.2 calculation been performed pre and post retrofit to ensure indoor air quality? (PNNL)',710,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
+    locked(`${p}-715`,'Do Natural Draft Appliances pass worst case draft testing? (Vent Testing PNNL)',715,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
+    locked(`${p}-720`,'Does the Gas Leakage Detection Test Pass? (PNNL)',720,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
+    locked(`${p}-725`,'Does the Spillage Test Pass? (PNNL)',725,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
+    locked(`${p}-730`,'Does the Undiluted CO Test Pass? (PNNL)',730,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
+    locked(`${p}-735`,'Does the Venting Test Pass? (PNNL)',735,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
+    edit('740',740), edit('745',745), edit('750',750), edit('755',755), edit('760',760),
     // Signature
     locked(`${p}-900`,'Signature & Approvals Section',900,'1'),
     locked(`${p}-905`,'Attach a copy of your completed Installation Warranty document.',905,'2',{mandatory:1,mandatoryImage:1}),
@@ -347,6 +350,7 @@ function buildTemplate(taskCode) {
 // PVI template structure (Post-Installation Verification / -V checklists)
 function buildPVITemplate(taskCode) {
   const p = taskCode;
+  const m = getMeasureName(taskCode);
   const locked = (code, label, seq, typeId, opts) => ({
     code, label, seq, typeId, locked:true,
     mandatory:0, mandatoryImage:0, mandatoryObs:0, mandatoryNotes:0,
@@ -369,26 +373,56 @@ function buildPVITemplate(taskCode) {
     locked(`${p}-145`,'What is the building type you are working in?',6,'2',{mandatory:1,autosuggest:'SINGLE FAMILYMULTI-FAMILY',isAOButtons:1}),
     locked(`${p}-150`,'Take a photo of the unit number to confirm the location of the installation.',7,'2',{mandatory:1,mandatoryImage:1,visibilityFormula:`AND( CP("${p}-145") = "MULTI-FAMILY"; CP_VISIBLE("${p}-145"))`}),
     locked(`${p}-155`,'Were all the safety checks disclosed to the property owner? (PNNL)',8,'2',{mandatory:1,autosuggest:'YES',isAOButtons:1}),
-    // EDIT slots (seq 9–23, all mandatory by default)
-    edit('200',9), edit('205',10), edit('210',11), edit('215',12), edit('220',13),
-    edit('225',14), edit('230',15), edit('235',16), edit('240',17), edit('245',18),
-    edit('250',19), edit('255',20), edit('260',21), edit('265',22), edit('270',23),
-    // Post Inspection PNNL (locked)
-    locked(`${p}-900`,'Post Inspection - PNNL Section',24,'1'),
-    locked(`${p}-905`,'Does the Ambient CO Test Pass? (PNNL)',25,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
-    locked(`${p}-910`,'Has an ASHRAE 62.2 calculation been performed pre and post retrofit to ensure indoor air quality? (PNNL)',26,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
-    locked(`${p}-915`,'Do Natural Draft Appliances pass worst case draft testing? (Vent Testing PNNL)',27,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
-    locked(`${p}-920`,'Does the Gas Leakage Detection Test Pass? (PNNL)',28,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
-    locked(`${p}-925`,'Does the Spillage Test Pass? (PNNL)',29,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
-    locked(`${p}-930`,'Does the Undiluted CO Test Pass? (PNNL)',30,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
-    locked(`${p}-935`,'Does the Venting Test Pass? (PNNL)',31,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
-    locked(`${p}-940`,'If a Total External Static Pressure Test was performed, record the result. (PNWL)',32,'2',{mandatory:1,mandatoryObs:1,hide:1}),
+    edit('160',9), edit('165',10), edit('170',11), edit('175',12), edit('180',13),
+    // Purchased Equipment
+    locked(`${p}-200`,'Purchased Equipment Section',14,'1'),
+    locked(`${p}-205`,'This section records equipment and purchase information needed for state & federal reporting.',15,'21'),
+    locked(`${p}-215`,'Record the Date of Purchase.',16,'2',{mandatory:1,mandatoryNotes:1}),
+    locked(`${p}-220`,'Record the Time Zone for Purchase Location.',17,'2',{mandatory:1,autosuggest:'EASTERNCENTRAL'}),
+    locked(`${p}-225`,'Record the UPC Code.',18,'2',{mandatory:1,mandatoryObs:1}),
+    locked(`${p}-230`,'Record the Manufacturer/Brand Name.',19,'2',{mandatory:1,mandatoryObs:1}),
+    locked(`${p}-235`,'Record the Model Number.',20,'2',{mandatory:1,mandatoryObs:1}),
+    locked(`${p}-240`,'Record the Serial Number.',21,'2',{mandatory:1,mandatoryObs:1}),
+    locked(`${p}-245`,'Record the Energy Star Equipment ID.',22,'2',{mandatory:1,mandatoryObs:1}),
+    locked(`${p}-250`,'Record the AHRI Reference Number.',23,'2',{mandatory:1,mandatoryObs:1}),
+    edit('255',24), edit('260',25), edit('265',26), edit('270',27), edit('275',28),
+    // Existing Measure
+    locked(`${p}-300`,`Existing ${m} Section`,29,'1'),
+    locked(`${p}-305`,`What is the type/fuel type of the existing ${m}?`,30,'2',{mandatory:1}),
+    locked(`${p}-310`,`What is the storage capacity/BTU/wattage/etc of the existing ${m}?`,31,'2',{mandatory:1}),
+    locked(`${p}-315`,`Take a photo of the existing ${m}.`,32,'2',{mandatory:1,mandatoryImage:1}),
+    locked(`${p}-320`,`Take a close-up photo of the nameplate showing the model number and serial number of the existing ${m}.`,33,'2',{mandatory:1,mandatoryImage:1}),
+    edit('325',34), edit('330',35), edit('335',36), edit('340',37), edit('345',38),
+    // Pre-Installation
+    locked(`${p}-400`,'Pre-Installation Section',39,'1'),
+    locked(`${p}-405`,`Take a wide-angle photo of the space where the ${m} will be installed.`,40,'2',{mandatory:1,mandatoryImage:1}),
+    locked(`${p}-410`,`Take a close-up photo of the nameplate showing model/serial of the newly installed ${m}.`,41,'2',{mandatory:1,mandatoryImage:1}),
+    locked(`${p}-415`,'Take a photo of the circuit breaker that powers the new appliance.',42,'2',{mandatory:1,mandatoryImage:1}),
+    edit('420',43), edit('425',44), edit('430',45), edit('435',46), edit('440',47),
+    // Installation
+    locked(`${p}-500`,`${m} Installation Section`,48,'1'),
+    locked(`${p}-505`,`What is the type/fuel type of the newly installed ${m}?`,49,'2',{mandatory:1}),
+    locked(`${p}-510`,`What is the storage capacity/BTU/wattage/etc of the newly installed ${m}?`,50,'2',{mandatory:1}),
+    locked(`${p}-515`,`Take a photo of the newly installed ${m}.`,51,'2',{mandatory:1,mandatoryImage:1}),
+    locked(`${p}-525`,`Take a photo showing the ${m} plugged in or connected to the electric panel.`,52,'2',{mandatory:1,mandatoryImage:1}),
+    edit('530',53), edit('535',54), edit('540',55), edit('545',56), edit('550',57),
+    // Post-Inspection PNNL
+    locked(`${p}-600`,'Post-Inspection PNNL Section',58,'1'),
+    locked(`${p}-605`,'Does the Ambient CO Test Pass? (PNNL)',59,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
+    locked(`${p}-610`,'Has an ASHRAE 62.2 calculation been performed pre and post retrofit to ensure indoor air quality? (PNNL)',60,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
+    locked(`${p}-615`,'Do Natural Draft Appliances pass worst case draft testing? (Vent Testing PNNL)',61,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
+    locked(`${p}-620`,'Does the Gas Leakage Detection Test Pass? (PNNL)',62,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
+    locked(`${p}-625`,'Does the Spillage Test Pass? (PNNL)',63,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
+    locked(`${p}-630`,'Does the Undiluted CO Test Pass? (PNNL)',64,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
+    locked(`${p}-635`,'Does the Venting Test Pass? (PNNL)',65,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
+    locked(`${p}-640`,'If a Total External Static Pressure Test was performed, record the result. (PNWL)',66,'2',{mandatory:1,mandatoryObs:1,hide:1}),
+    edit('645',67), edit('650',68), edit('655',69), edit('660',70), edit('665',71),
     // Signature
-    locked('12-SGN-05-V-25','Signature & Approvals Section',33,'1'),
-    locked('12-SGN-05-V-30','Post Verification Inspector: Type your name below, then select the hamburger icon to add your signature.',34,'3',{mandatoryImage:1,mandatoryObs:1}),
-    locked('12-SGN-05-V-35','Signature above indicates this measure has been site reviewed by the Inspector and is ready for final Project Coordinator review.',35,'21'),
-    locked('12-SGN-05-V-40','Choose your Project Coordinator from the dropdown options, then click the Ready for Review box.',36,'35',{mandatory:1}),
-    locked('12-SGN-05-V-45','..........',37,'21'),
+    locked('12-SGN-05-V-25','Signature & Approvals Section',72,'1'),
+    locked('12-SGN-05-V-30','Post Verification Inspector: Type your name below, then select the hamburger icon to add your signature.',73,'3',{mandatoryImage:1,mandatoryObs:1}),
+    locked('12-SGN-05-V-35','Signature above indicates this measure has been site reviewed by the Inspector and is ready for final Project Coordinator review.',74,'21'),
+    locked('12-SGN-05-V-40','Choose your Project Coordinator from the dropdown options, then click the Ready for Review box.',75,'35',{mandatory:1}),
+    locked('12-SGN-05-V-45','..........',76,'21'),
   ];
 }
 
