@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FTQ360 Checklist Requirements — IESP</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f5f3ef; --surface: #ffffff; --surface2: #f0ede8;
+    --accent: #1a3a2a; --accent2: #2d6a4f; --accent-light: #d8f3dc;
+    --border: #ddd9d2; --text: #1c1c1c; --text2: #6b6560; --text3: #9b958e;
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* HEADER */
+  .app-header { background: var(--accent); color: white; padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid var(--accent2); }
+  .app-header h1 { font-size: 15px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; font-family: 'DM Mono', monospace; }
+  .app-header .meta { font-size: 12px; color: #a0c4b0; font-family: 'DM Mono', monospace; cursor: pointer; }
+  .app-header .meta:hover { color: white; }
+
+  /* TABS */
+  .tabs { display: flex; background: var(--accent); padding: 0 32px; border-bottom: 1px solid #0d2318; }
+  .tab { padding: 10px 20px; font-size: 13px; color: #7aad90; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; font-weight: 500; letter-spacing: 0.03em; }
+  .tab.active { color: white; border-bottom-color: #5bc88a; }
+  .tab:hover:not(.active) { color: #b0d4c0; }
+
+  .main { max-width: 960px; margin: 0 auto; padding: 28px 24px; }
+
+  /* SELECTOR SCREEN */
+  .selector-screen { max-width: 600px; margin: 60px auto; }
+  .selector-screen h2 { font-size: 22px; font-weight: 500; color: var(--text); margin-bottom: 8px; }
+  .selector-screen p { font-size: 14px; color: var(--text2); margin-bottom: 32px; line-height: 1.6; }
+  .selector-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text2); margin-bottom: 8px; display: block; }
+  .selector-select { width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; font-family: 'DM Sans', sans-serif; background: white; color: var(--text); outline: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6560' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; cursor: pointer; }
+  .selector-select:focus { border-color: var(--accent2); }
+  .selector-btn { margin-top: 16px; width: 100%; padding: 13px; background: var(--accent); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background 0.15s; }
+  .selector-btn:hover { background: var(--accent2); }
+  .selector-btn:disabled { background: var(--border); color: var(--text3); cursor: not-allowed; }
+  .custom-name-row { margin-top: 14px; display: none; }
+  .custom-name-row input { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; font-family: 'DM Sans', sans-serif; color: var(--text); outline: none; background: white; }
+  .custom-name-row input:focus { border-color: var(--accent2); }
+  .custom-name-row label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text2); margin-bottom: 6px; display: block; }
+
+  /* EDITOR */
+  .instructions { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent2); border-radius: 8px; padding: 16px 18px; font-size: 13px; line-height: 1.7; color: var(--text2); margin-bottom: 20px; }
+  .instructions strong { color: var(--text); }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+
+  .section-block { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 14px; overflow: hidden; }
+  .section-header { display: flex; align-items: center; gap: 12px; padding: 14px 18px; cursor: pointer; border-bottom: 1px solid var(--border); background: var(--surface2); user-select: none; }
+  .section-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent2); flex-shrink: 0; }
+  .section-name-display { font-size: 13px; font-weight: 600; color: var(--text); flex: 1; }
+  .section-seq { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; margin-right: 8px; }
+  .section-toggle { font-size: 10px; color: var(--text3); transition: transform 0.2s; }
+  .section-toggle.open { transform: rotate(180deg); }
+  .section-body { padding: 16px 18px; }
+
+  .checkpoint-row { display: grid; grid-template-columns: 40px 1fr; gap: 8px; align-items: start; padding: 10px 0; border-bottom: 1px solid var(--surface2); }
+  .checkpoint-row:last-child { border-bottom: none; }
+  .cp-num { font-size: 11px; font-family: 'DM Mono', monospace; color: var(--text3); padding-top: 9px; text-align: right; }
+  .cp-main { display: flex; flex-direction: column; gap: 6px; }
+
+  .cp-label-input { width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; font-family: 'DM Sans', sans-serif; color: var(--text); outline: none; transition: border-color 0.15s; }
+  .cp-label-input.empty { background: #fffdf5; border-color: #e8d87a; }
+  .cp-label-input.filled { background: white; border-color: #a8d5b5; }
+  .cp-label-input.locked-edit { border-color: #f0a940; background: #fffaf0; }
+  .cp-label-input:focus { border-color: var(--accent2); background: white; }
+
+  .cp-options-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .cp-type-select, .cp-autosuggest, .cp-visibility { padding: 4px 7px; border: 1px solid var(--border); border-radius: 5px; font-size: 11px; background: var(--bg); color: var(--text); outline: none; }
+  .cp-type-select:focus, .cp-autosuggest:focus, .cp-visibility:focus { border-color: var(--accent2); }
+  .cp-autosuggest { font-family: 'DM Mono', monospace; width: 210px; }
+  .cp-autosuggest::placeholder, .cp-visibility::placeholder { color: var(--text3); }
+  .cp-visibility { font-family: 'DM Mono', monospace; width: 240px; font-size: 10px; }
+
+  .toggle-group { display: flex; gap: 4px; }
+  .toggle-btn { padding: 3px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 10px; font-weight: 600; cursor: pointer; background: var(--bg); color: var(--text2); transition: all 0.12s; letter-spacing: 0.03em; }
+  .toggle-btn.active-m { background: var(--accent); color: white; border-color: var(--accent); }
+  .toggle-btn.active-mi { background: #1565c0; color: white; border-color: #1565c0; }
+  .toggle-btn.active-te { background: #6a1b9a; color: white; border-color: #6a1b9a; }
+  .toggle-btn.active-hide { background: #555; color: white; border-color: #333; }
+
+  .locked-row { font-size: 12px; color: var(--text2); padding: 7px 10px; background: var(--surface2); border-radius: 6px; border: 1px solid var(--border); }
+  .locked-badges { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
+  .badge-sm { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: 600; }
+  .cp-locked-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .cp-locked-label { font-size: 12px; color: var(--text2); flex: 1; white-space: normal; word-break: break-word; }
+
+  .unlock-btn { padding: 3px 9px; border: 1px solid var(--border); border-radius: 4px; font-size: 10px; font-weight: 600; cursor: pointer; background: var(--bg); color: var(--text3); transition: all 0.12s; letter-spacing: 0.03em; white-space: nowrap; flex-shrink: 0; }
+  .unlock-btn:hover { border-color: var(--accent2); color: var(--accent2); background: var(--accent-light); }
+  .unlock-btn.unlocked { background: #fff0e0; color: #b45309; border-color: #f0a940; }
+
+  .add-cp-btn { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 8px; margin-top: 8px; background: none; border: 1.5px dashed var(--border); border-radius: 7px; font-size: 12px; color: var(--text3); cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+  .add-cp-btn:hover { border-color: var(--accent2); color: var(--accent2); background: var(--accent-light); }
+
+  .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; text-align: center; }
+  .stat-num { font-size: 28px; font-weight: 600; color: var(--accent); font-family: 'DM Mono', monospace; line-height: 1; margin-bottom: 4px; }
+  .stat-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; }
+
+  .export-card { background: var(--accent); color: white; border-radius: 10px; padding: 24px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; gap: 16px; }
+  .export-card h3 { font-size: 16px; font-weight: 500; margin-bottom: 4px; }
+  .export-card p { font-size: 13px; color: #8dc9a8; }
+  .export-btn { padding: 12px 28px; background: #5bc88a; color: #0d2318; border: none; border-radius: 7px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; white-space: nowrap; flex-shrink: 0; }
+  .export-btn:hover { background: #6dd49a; transform: translateY(-1px); }
+
+  .preview-table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: auto; max-height: 500px; }
+  .preview-table { width: 100%; border-collapse: collapse; font-size: 11px; font-family: 'DM Mono', monospace; }
+  .preview-table th { background: var(--surface2); padding: 8px 10px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text2); border-bottom: 1px solid var(--border); white-space: nowrap; position: sticky; top: 0; }
+  .preview-table td { padding: 7px 10px; border-bottom: 1px solid var(--surface2); color: var(--text); max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .preview-table tr:hover td { background: var(--surface2); }
+
+  .badge { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: 600; letter-spacing: 0.03em; }
+  .badge-edit { background: #fff3cd; color: #856404; }
+  .badge-filled { background: var(--accent-light); color: var(--accent); }
+  .badge-section { background: #e3d5f5; color: #5a2d82; }
+  .badge-locked { background: var(--surface2); color: var(--text3); }
+  .badge-overridden { background: #fff0e0; color: #b45309; }
+  .badge-added { background: #e8f5e9; color: #2e7d32; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <h1>FTQ360 Checklist Requirements</h1>
+  <span class="meta" id="header-meta" onclick="goHome()" title="Change checklist">IESP · QCON</span>
+</div>
+
+<div class="tabs" id="tabs-bar" style="display:none">
+  <div class="tab active" onclick="switchTab('build')">Build Checklist</div>
+  <div class="tab" onclick="switchTab('export')">Preview &amp; Export</div>
+</div>
+
+<div class="main">
+
+  <!-- SELECTOR -->
+  <div id="selector-screen" class="selector-screen">
+    <h2>Select a checklist to fill out</h2>
+    <p>Choose the checklist that matches your assigned measure. Your responses will be exported as a CSV file ready for FTQ360 import.</p>
+    <label class="selector-label" for="checklist-select">Checklist</label>
+    <select class="selector-select" id="checklist-select" onchange="onSelectChange()">
+      <option value="">— Select a checklist —</option>
+      <option value="22-ENV-10-V">22-ENV-10-V · Duct Sealing and Insulation [HEAR Inspection]</option>
+      <option value="22-HVC-35-V">22-HVC-35-V · Heat Pump - Additional Air Handler [HEAR Inspection]</option>
+      <option value="21-HVC-35-V">21-HVC-35-V · Heat Pump - Additional Air Handler [HOMES Inspection]</option>
+      <option value="22-HVC-10-V">22-HVC-10-V · Heat Pump Ductless [HEAR Inspection]</option>
+      <option value="21-HVC-10-V">21-HVC-10-V · Heat Pump Ductless [HOMES Inspection]</option>
+      <option value="21-HVC-25-V">21-HVC-25-V · High Efficiency Modulating Boiler [HOMES Inspection]</option>
+      <option value="CUSTOM">Custom · Blank template</option>
+    </select>
+    <div class="custom-name-row" id="custom-name-row">
+      <label for="custom-code-input">Custom Task Code</label>
+      <input type="text" id="custom-code-input" placeholder="e.g. 22-HVC-99-Q" oninput="updateCustomSuffix(this.value)" />
+      <div style="margin-top:14px">
+        <label class="selector-label">Which template type?</label>
+        <div style="display:flex;gap:10px;margin-top:6px">
+          <label id="type-qcon-label" style="flex:1;display:flex;align-items:center;gap:10px;padding:12px 14px;border:1.5px solid var(--accent2);border-radius:8px;cursor:pointer;background:var(--accent-light);font-size:13px;font-weight:500">
+            <input type="radio" name="custom-type" value="Q" checked onchange="onCustomTypeChange()" style="accent-color:var(--accent2)">
+            <span>
+              <span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">-Q &nbsp;</span>
+              QCON · Installation Checklist
+            </span>
+          </label>
+          <label id="type-pvi-label" style="flex:1;display:flex;align-items:center;gap:10px;padding:12px 14px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;background:var(--surface);font-size:13px;font-weight:500">
+            <input type="radio" name="custom-type" value="V" onchange="onCustomTypeChange()" style="accent-color:var(--accent2)">
+            <span>
+              <span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text2)">-V &nbsp;</span>
+              PVI · Post-Installation Verification
+            </span>
+          </label>
+        </div>
+      </div>
+    </div>
+    <button class="selector-btn" id="start-btn" disabled onclick="startEditor()">Start &#8594;</button>
+  </div>
+
+  <!-- EDITOR -->
+  <div id="editor-screen" class="hidden">
+    <div id="tab-build">
+      <div class="instructions">
+        <strong>How this works:</strong> Greyed-out rows are locked template items — click <strong>Unlock</strong> to edit them. Yellow-bordered <span style="background:#fff3cd;color:#856404;padding:1px 5px;border-radius:3px;font-size:11px;font-weight:600;">EDIT</span> slots are yours to fill in. Use <strong>+ Add checkpoint</strong> at the bottom of any section to add new rows. Go to <strong>Preview &amp; Export</strong> when ready.
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#e8d87a"></div> Empty EDIT slot</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#a8d5b5"></div> Filled checkpoint</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div> M = Mandatory</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#1565c0"></div> MI = Mandatory Image</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#6a1b9a"></div> TE = Text Entry Required</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#555"></div> Hide = Hidden in FTQ360</div>
+        </div>
+      </div>
+      <div id="sections-container"></div>
+    </div>
+    <div id="tab-export" class="hidden">
+      <div class="summary-grid" id="summary-grid"></div>
+      <div class="export-card">
+        <div><h3>Export to FTQ360 CSV</h3><p>Downloads a complete checklist file ready for import</p></div>
+        <button class="export-btn" onclick="exportCSV()">&#8659; Download CSV</button>
+      </div>
+      <div class="preview-table-wrap">
+        <table class="preview-table">
+          <thead><tr><th>Code</th><th>Label</th><th>Seq</th><th>Type</th><th>M</th><th>MI</th><th>TE</th><th>Autosuggest</th><th>Status</th></tr></thead>
+          <tbody id="preview-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const CHECKPOINT_TYPES = [
+  {id:'1',label:'Section Header'},{id:'2',label:'Standard'},
+  {id:'3',label:'Signature'},{id:'21',label:'Info Text'},{id:'35',label:'Approver Picklist'}
+];
+
+const CHECKLIST_NAMES = {
+  '22-ENV-10-V': 'Duct Sealing and Insulation [HEAR Inspection]',
+  '22-HVC-35-V': 'Heat Pump - Additional Air Handler [HEAR Inspection]',
+  '21-HVC-35-V': 'Heat Pump - Additional Air Handler [HOMES Inspection]',
+  '22-HVC-10-V': 'Heat Pump Ductless [HEAR Inspection]',
+  '21-HVC-10-V': 'Heat Pump Ductless [HOMES Inspection]',
+  '21-HVC-25-V': 'High Efficiency Modulating Boiler [HOMES Inspection]',
+  'CUSTOM': 'Custom Checklist'
+};
+
+// Build template rows for a given task code
+// All 6 named checklists use the QCON structure (same as 21-HVC-15-Q)
+function buildTemplate(taskCode) {
+  const p = taskCode; // prefix
+  const locked = (code, label, seq, typeId, opts) => ({
+    code, label, seq, typeId, locked:true,
+    mandatory:0, mandatoryImage:0, mandatoryObs:0, mandatoryNotes:0,
+    autosuggest:'', visibilityFormula:'', isAOButtons:0, hide:0,
+    ...opts
+  });
+  const edit = (suffix, seq) => ({
+    code:`${p}-${suffix}`, label:'', seq, typeId:'2', locked:false, isEdit:true,
+    mandatory:0, mandatoryImage:0, mandatoryObs:0, mandatoryNotes:0,
+    autosuggest:'', visibilityFormula:'', hide:0
+  });
+
+  return [
+    // General Instructions
+    locked(`${p}-100`,'General Instructions Section',100,'1'),
+    locked(`${p}-105`,'An orange line, icon, or button indicates a required field.',105,'21'),
+    locked(`${p}-110`,'Per federal requirements, all photos must be geotagged. Enable location services for the FTQ360 app in your device settings.',110,'21'),
+    locked(`${p}-115`,'Photos must be taken from within the FTQ360 app using the camera icon to capture geotagging information correctly.',115,'21'),
+    locked(`${p}-120`,'Ensure photos are clear and that details, such as model numbers, are legible.',120,'21'),
+    locked(`${p}-125`,'Before proceeding, verify this checklist corresponds to your assigned measure listed in the work order.',125,'21'),
+    locked(`${p}-145`,'What is the building type you are working in?',145,'2',{mandatory:1,autosuggest:'SINGLE FAMILYMULTI-FAMILY',isAOButtons:0}),
+    locked(`${p}-150`,'Take a photo of the unit number to confirm the location of the installation.',150,'2',{mandatory:1,mandatoryImage:1,visibilityFormula:`AND( CP("${p}-145") = "MULTI-FAMILY"; CP_VISIBLE("${p}-145"))`}),
+    locked(`${p}-155`,'Confirm the scope of work for the unit matches the work order.',155,'2',{mandatory:1,autosuggest:'YESNO',visibilityFormula:`AND( CP("${p}-145") = "MULTI-FAMILY"; CP_VISIBLE("${p}-145"))`}),
+    locked(`${p}-160`,'Confirm the installation area within the unit is free of personal items and any pets are secured.',160,'2',{mandatory:1,autosuggest:'YESNO',visibilityFormula:`AND( CP("${p}-145") = "MULTI-FAMILY"; CP_VISIBLE("${p}-145"))`}),
+    locked(`${p}-165`,'If the installation area is not free and clear, upload photo documentation.',165,'2',{mandatoryImage:1,visibilityFormula:`AND( CP("${p}-160") = "NO"; CP_VISIBLE("${p}-160"))`}),
+    locked(`${p}-170`,'Are there any signs of damage near the work area?',170,'2',{mandatory:1,autosuggest:'YESNO',visibilityFormula:`AND( CP("${p}-145") = "MULTI-FAMILY"; CP_VISIBLE("${p}-145"))`}),
+    locked(`${p}-175`,'If YES, describe the damage near the work area and upload photo documentation.',175,'2',{mandatory:1,mandatoryImage:1,mandatoryObs:1,visibilityFormula:`AND( CP("${p}-170") = "YES"; CP_VISIBLE("${p}-170"))`}),
+    edit('180',180), edit('185',185), edit('190',190), edit('195',195),
+    // Purchased Equipment
+    locked(`${p}-200`,'Purchased Equipment Section',200,'1'),
+    locked(`${p}-205`,'This section records equipment and purchase information needed for state & federal reporting.',205,'21'),
+    locked(`${p}-215`,'Record the Date of Purchase.',215,'2',{mandatory:1,mandatoryNotes:1}),
+    locked(`${p}-220`,'Record the Time Zone for Purchase Location.',220,'2',{mandatory:1,autosuggest:'EASTERNCENTRAL'}),
+    locked(`${p}-225`,'Record the UPC Code.',225,'2',{mandatory:1,mandatoryObs:1}),
+    locked(`${p}-230`,'Record the Manufacturer/Brand Name.',230,'2',{mandatory:1,mandatoryObs:1}),
+    locked(`${p}-235`,'Record the Model Number.',235,'2',{mandatory:1,mandatoryObs:1}),
+    locked(`${p}-240`,'Record the Serial Number.',240,'2',{mandatory:1,mandatoryObs:1}),
+    locked(`${p}-245`,'Record the Energy Star Equipment ID.',245,'2',{mandatory:1,mandatoryObs:1}),
+    locked(`${p}-250`,'Record the AHRI Reference Number.',250,'2',{mandatory:1,mandatoryObs:1}),
+    locked(`${p}-255`,'Record how many of the items were installed.',255,'2',{mandatory:1,mandatoryObs:1,isAOButtons:1}),
+    locked(`${p}-260`,'Record the annual energy use estimated on the EnergyGuide label. (kWh/yr)',260,'2',{mandatory:1,mandatoryObs:1}),
+    edit('265',265), edit('270',270), edit('275',275), edit('280',280),
+    edit('285',285), edit('290',290), edit('295',295),
+    // Existing Measure
+    locked(`${p}-300`,'Existing [Specific Measure] Section',300,'1'),
+    locked(`${p}-305`,'What is the type/fuel type of the existing [Specific Measure]?',305,'2',{mandatory:1}),
+    locked(`${p}-310`,'What is the storage capacity/BTU/wattage/etc of the existing [Specific Measure]?',310,'2',{mandatory:1}),
+    locked(`${p}-315`,'Take a photo of the existing [Specific Measure].',315,'2',{mandatory:1,mandatoryImage:1}),
+    locked(`${p}-320`,'Take a close-up photo of the nameplate showing the model number and serial number of the existing [Specific Measure].',320,'2',{mandatory:1,mandatoryImage:1}),
+    edit('325',325), edit('330',330), edit('335',335), edit('340',340),
+    edit('345',345), edit('350',350), edit('355',355), edit('360',360),
+    edit('365',365), edit('370',370), edit('375',375), edit('380',380),
+    edit('385',385), edit('390',390), edit('395',395),
+    // Pre-Installation
+    locked(`${p}-400`,'Pre-Installation Section',400,'1'),
+    locked(`${p}-405`,'Take a wide-angle photo of the space where the [Specific Measure] will be installed.',405,'2',{mandatory:1,mandatoryImage:1}),
+    locked(`${p}-410`,'Take a close-up photo of the nameplate showing model/serial of newly installed [Specific Measure].',410,'2',{mandatory:1,mandatoryImage:1}),
+    locked(`${p}-415`,'Take a photo of the circuit breaker that powers the new appliance.',415,'2',{mandatory:1,mandatoryImage:1}),
+    locked(`${p}-420`,'Take a photo of the gas pipe showing it is off and capped.',420,'2',{mandatory:1,mandatoryImage:1}),
+    edit('425',425), edit('430',430), edit('435',435), edit('440',440),
+    edit('445',445), edit('450',450), edit('455',455), edit('460',460),
+    edit('465',465), edit('470',470), edit('475',475), edit('480',480),
+    edit('485',485), edit('490',490), edit('495',495),
+    // Installation
+    locked(`${p}-500`,'[Specific Measure] Installation Section',500,'1'),
+    locked(`${p}-505`,'What is the type/fuel type of the newly installed [Specific Measure]?',505,'2',{mandatory:1}),
+    locked(`${p}-510`,'What is the storage capacity/BTU/wattage/etc of the newly installed [Specific Measure]?',510,'2',{mandatory:1}),
+    locked(`${p}-515`,'Take a photo of the newly installed [Specific Measure].',515,'2',{mandatory:1,mandatoryImage:1}),
+    locked(`${p}-525`,'Take a photo showing the [Specific Measure] plugged in or connected to the electric panel.',525,'2',{mandatory:1,mandatoryImage:1}),
+    locked(`${p}-530`,'Take a photo of the condensate drain location for the [Specific Measure].',530,'2',{mandatory:1,mandatoryImage:1}),
+    edit('535',535), edit('540',540), edit('545',545), edit('550',550),
+    edit('555',555), edit('560',560), edit('565',565), edit('570',570),
+    edit('575',575), edit('580',580), edit('585',585), edit('590',590),
+    edit('595',595), edit('605',605),
+    // Post-Installation
+    locked(`${p}-800`,'Post-Installation Section',800,'1'),
+    locked(`${p}-805`,'Take a wide-angle photo of the completed [Specific Measure] installation.',805,'2',{mandatory:1,mandatoryImage:1}),
+    locked(`${p}-810`,'Take a photo of the cleaned-up installation area before you leave.',810,'2',{mandatory:1,mandatoryImage:1}),
+    edit('815',815), edit('820',820), edit('825',825), edit('830',830), edit('835',835),
+    // Signature
+    locked(`${p}-900`,'Signature & Approvals Section',900,'1'),
+    locked(`${p}-905`,'Attach a copy of your completed Installation Warranty document.',905,'2',{mandatory:1,mandatoryImage:1}),
+    locked(`${p}-910`,'Qualified Contractor signature acknowledges installation in accordance with the Contractor Participation Manual.',910,'21'),
+    locked(`${p}-915`,'Qualified Contractor signature field.',915,'3',{mandatoryObs:1,mandatoryNotes:1}),
+    locked(`${p}-920`,'Some companies require internal supervisor review before sending to RGC.',920,'21'),
+    locked(`${p}-925`,'QC Supervisor signature acknowledges installation is ready for RGC review.',925,'21'),
+    locked(`${p}-930`,'Qualified Contractor Supervisor signature (if applicable).',930,'3'),
+    locked(`${p}-935`,'Choose your RGC from the Inspection Report Approver picklist and click Ready for Review.',935,'35',{mandatory:1}),
+    locked(`${p}-940`,'Regional General Contractor Instructions: sign, click Approved.',940,'21'),
+    locked(`${p}-945`,'..........',945,'21'),
+  ];
+}
+
+// PVI template structure (Post-Installation Verification / -V checklists)
+function buildPVITemplate(taskCode) {
+  const p = taskCode;
+  const locked = (code, label, seq, typeId, opts) => ({
+    code, label, seq, typeId, locked:true,
+    mandatory:0, mandatoryImage:0, mandatoryObs:0, mandatoryNotes:0,
+    autosuggest:'', visibilityFormula:'', isAOButtons:0, hide:0,
+    ...opts
+  });
+  const edit = (suffix, seq) => ({
+    code:`${p}-${suffix}`, label:'', seq, typeId:'2', locked:false, isEdit:true,
+    mandatory:1, mandatoryImage:0, mandatoryObs:0, mandatoryNotes:0,
+    autosuggest:'', visibilityFormula:'', hide:0
+  });
+
+  return [
+    // General Instructions
+    locked(`${p}-100`,'General Instructions Section',1,'1'),
+    locked(`${p}-105`,'An orange line, icon, or button indicates a required field.',2,'21'),
+    locked(`${p}-110`,'Per federal requirements, all photos must be geotagged. Enable location services for the FTQ360 app in your device settings.',3,'21'),
+    locked(`${p}-115`,'Photos must be taken from within the FTQ360 app using the camera icon to capture geotagging information correctly.',4,'21'),
+    locked(`${p}-120`,'Ensure photos are clear and that details, such as model numbers, are legible.',5,'21'),
+    locked(`${p}-145`,'What is the building type you are working in?',6,'2',{mandatory:1,autosuggest:'SINGLE FAMILYMULTI-FAMILY',isAOButtons:1}),
+    locked(`${p}-150`,'Take a photo of the unit number to confirm the location of the installation.',7,'2',{mandatory:1,mandatoryImage:1,visibilityFormula:`AND( CP("${p}-145") = "MULTI-FAMILY"; CP_VISIBLE("${p}-145"))`}),
+    locked(`${p}-155`,'Were all the safety checks disclosed to the property owner? (PNNL)',8,'2',{mandatory:1,autosuggest:'YES',isAOButtons:1}),
+    // EDIT slots (seq 9–23, all mandatory by default)
+    edit('200',9), edit('205',10), edit('210',11), edit('215',12), edit('220',13),
+    edit('225',14), edit('230',15), edit('235',16), edit('240',17), edit('245',18),
+    edit('250',19), edit('255',20), edit('260',21), edit('265',22), edit('270',23),
+    // Post Inspection PNNL (locked)
+    locked(`${p}-900`,'Post Inspection - PNNL Section',24,'1'),
+    locked(`${p}-905`,'Does the Ambient CO Test Pass? (PNNL)',25,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
+    locked(`${p}-910`,'Has an ASHRAE 62.2 calculation been performed pre and post retrofit to ensure indoor air quality? (PNNL)',26,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
+    locked(`${p}-915`,'Do Natural Draft Appliances pass worst case draft testing? (Vent Testing PNNL)',27,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
+    locked(`${p}-920`,'Does the Gas Leakage Detection Test Pass? (PNNL)',28,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
+    locked(`${p}-925`,'Does the Spillage Test Pass? (PNNL)',29,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
+    locked(`${p}-930`,'Does the Undiluted CO Test Pass? (PNNL)',30,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
+    locked(`${p}-935`,'Does the Venting Test Pass? (PNNL)',31,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
+    locked(`${p}-940`,'If a Total External Static Pressure Test was performed, record the result. (PNWL)',32,'2',{mandatory:1,mandatoryObs:1,hide:1}),
+    // Signature
+    locked('12-SGN-05-V-25','Signature & Approvals Section',33,'1'),
+    locked('12-SGN-05-V-30','Post Verification Inspector: Type your name below, then select the hamburger icon to add your signature.',34,'3',{mandatoryImage:1,mandatoryObs:1}),
+    locked('12-SGN-05-V-35','Signature above indicates this measure has been site reviewed by the Inspector and is ready for final Project Coordinator review.',35,'21'),
+    locked('12-SGN-05-V-40','Choose your Project Coordinator from the dropdown options, then click the Ready for Review box.',36,'35',{mandatory:1}),
+    locked('12-SGN-05-V-45','..........',37,'21'),
+  ];
+}
+
+// State
+let TASK_CODE = '';
+let TEMPLATE = [];
+let TEMPLATE_TYPE = 'Q'; // 'Q' = QCON, 'V' = PVI
+let state = {};
+let unlockedState = {};
+let addedItems = {};
+const openSections = new Set([0]);
+
+// ---- SELECTOR ----
+function onSelectChange() {
+  const val = document.getElementById('checklist-select').value;
+  const customRow = document.getElementById('custom-name-row');
+  const btn = document.getElementById('start-btn');
+  customRow.style.display = val === 'CUSTOM' ? 'block' : 'none';
+  btn.disabled = !val;
+}
+
+function onCustomTypeChange() {
+  const type = document.querySelector('input[name="custom-type"]:checked').value;
+  const qLabel = document.getElementById('type-qcon-label');
+  const vLabel = document.getElementById('type-pvi-label');
+  if (type === 'Q') {
+    qLabel.style.borderColor = 'var(--accent2)'; qLabel.style.background = 'var(--accent-light)';
+    vLabel.style.borderColor = 'var(--border)'; vLabel.style.background = 'var(--surface)';
+    // Auto-suffix task code if user hasn't typed yet or ends in -V
+    const inp = document.getElementById('custom-code-input');
+    if (!inp.value || inp.value.endsWith('-V')) inp.value = inp.value.replace(/-V$/,'-Q');
+  } else {
+    vLabel.style.borderColor = 'var(--accent2)'; vLabel.style.background = 'var(--accent-light)';
+    qLabel.style.borderColor = 'var(--border)'; qLabel.style.background = 'var(--surface)';
+    const inp = document.getElementById('custom-code-input');
+    if (!inp.value || inp.value.endsWith('-Q')) inp.value = inp.value.replace(/-Q$/,'-V');
+  }
+}
+
+function updateCustomSuffix(val) {
+  // Sync radio to suffix in typed code
+  if (val.endsWith('-V')) {
+    document.querySelector('input[name="custom-type"][value="V"]').checked = true;
+    onCustomTypeChange();
+  } else if (val.endsWith('-Q')) {
+    document.querySelector('input[name="custom-type"][value="Q"]').checked = true;
+    onCustomTypeChange();
+  }
+}
+
+function startEditor() {
+  const val = document.getElementById('checklist-select').value;
+  if (!val) return;
+
+  let templateType = 'Q'; // default QCON for all named checklists
+  if (val === 'CUSTOM') {
+    const code = document.getElementById('custom-code-input').value.trim();
+    TASK_CODE = code || 'CUSTOM-Q';
+    templateType = document.querySelector('input[name="custom-type"]:checked').value;
+  } else {
+    TASK_CODE = val;
+    // Named checklists ending in -V use PVI template
+    templateType = val.endsWith('-V') ? 'V' : 'Q';
+  }
+
+  TEMPLATE = templateType === 'V' ? buildPVITemplate(TASK_CODE) : buildTemplate(TASK_CODE);
+  TEMPLATE_TYPE = templateType;
+  state = {};
+  unlockedState = {};
+  addedItems = {};
+  openSections.clear();
+  openSections.add(0);
+
+  TEMPLATE.filter(t => t.isEdit).forEach(t => {
+    state[t.code] = {label:'',typeId:'2',mandatory:0,mandatoryImage:0,mandatoryObs:0,autosuggest:'',visibilityFormula:'',hide:0};
+  });
+
+  const name = CHECKLIST_NAMES[val] || TASK_CODE;
+  document.getElementById('header-meta').textContent = TASK_CODE + ' · ' + name;
+  document.getElementById('selector-screen').classList.add('hidden');
+  document.getElementById('editor-screen').classList.remove('hidden');
+  document.getElementById('tabs-bar').style.display = 'flex';
+  switchTab('build');
+  renderSections();
+}
+
+function goHome() {
+  if (!confirm('Go back to checklist selection? Your unsaved changes will be lost.')) return;
+  document.getElementById('selector-screen').classList.remove('hidden');
+  document.getElementById('editor-screen').classList.add('hidden');
+  document.getElementById('tabs-bar').style.display = 'none';
+  document.getElementById('header-meta').textContent = 'IESP · QCON';
+  document.getElementById('checklist-select').value = '';
+  document.getElementById('custom-name-row').style.display = 'none';
+  document.getElementById('start-btn').disabled = true;
+}
+
+// ---- TEMPLATE HELPERS ----
+function getSections() {
+  const sections = [];
+  let current = null;
+  for (const item of TEMPLATE) {
+    if (item.typeId === '1') {
+      if (current) sections.push(current);
+      current = {header:item, items:[]};
+    } else if (current) {
+      current.items.push(item);
+    }
+  }
+  if (current) sections.push(current);
+  return sections;
+}
+
+function resolve(item) {
+  if (!item.locked) return state[item.code] || item;
+  return unlockedState[item.code] || item;
+}
+
+// ---- ADDED ITEMS ----
+function addCheckpoint(si) {
+  const sections = getSections();
+  const sec = sections[si];
+  if (!addedItems[si]) addedItems[si] = [];
+  const allCodes = [...sec.items.map(i=>i.code), ...(addedItems[si]||[]).map(i=>i.code)];
+  const prefix = TASK_CODE + '-';
+  let maxNum = 0;
+  for (const c of allCodes) {
+    const n = parseInt(c.replace(prefix,''), 10);
+    if (!isNaN(n) && n > maxNum) maxNum = n;
+  }
+  addedItems[si].push({code: prefix+(maxNum+5), label:'', typeId:'2', mandatory:0, mandatoryImage:0, mandatoryObs:0, autosuggest:'', visibilityFormula:'', hide:0, isAdded:true});
+  if (!openSections.has(si)) openSections.add(si);
+  renderSections();
+  setTimeout(()=>{const inputs=document.querySelectorAll('.cp-label-input');if(inputs.length)inputs[inputs.length-1].focus();},50);
+}
+
+function updateAdded(si, code, field, value) {
+  const item = (addedItems[si]||[]).find(i=>i.code===code);
+  if (item) item[field] = value;
+}
+
+function toggleAddedFlag(si, code, field, btn) {
+  const item = (addedItems[si]||[]).find(i=>i.code===code);
+  if (!item) return;
+  item[field] = item[field]?0:1;
+  const cm={mandatory:'active-m',mandatoryImage:'active-mi',mandatoryObs:'active-te',hide:'active-hide'};
+  btn.classList.toggle(cm[field]);
+}
+
+function removeAdded(si, code) {
+  if (addedItems[si]) addedItems[si] = addedItems[si].filter(i=>i.code!==code);
+  renderSections();
+}
+
+// ---- UNLOCK ----
+function toggleUnlock(code) {
+  const item = TEMPLATE.find(t=>t.code===code);
+  if (!item) return;
+  if (unlockedState[code]) {
+    delete unlockedState[code];
+  } else {
+    unlockedState[code] = {
+      label:item.label, typeId:item.typeId,
+      mandatory:item.mandatory, mandatoryImage:item.mandatoryImage,
+      mandatoryObs:item.mandatoryObs, autosuggest:item.autosuggest||'',
+      visibilityFormula:item.visibilityFormula||'', hide:item.hide||0
+    };
+  }
+  renderSections();
+}
+
+function updateUnlocked(code, field, value) { if (unlockedState[code]) unlockedState[code][field] = value; }
+
+function toggleUnlockedFlag(code, field, btn) {
+  if (!unlockedState[code]) return;
+  unlockedState[code][field] = unlockedState[code][field]?0:1;
+  const cm={mandatory:'active-m',mandatoryImage:'active-mi',mandatoryObs:'active-te',hide:'active-hide'};
+  btn.classList.toggle(cm[field]);
+}
+
+// ---- RENDER ----
+function renderSections() {
+  const container = document.getElementById('sections-container');
+  const sections = getSections();
+  container.innerHTML = '';
+  sections.forEach((sec, si) => {
+    const editItems = sec.items.filter(i=>i.isEdit);
+    const filledCount = editItems.filter(i=>state[i.code]&&state[i.code].label.trim()).length;
+    const added = addedItems[si]||[];
+    const totalFilled = filledCount + added.filter(i=>i.label.trim()).length;
+    const totalSlots = editItems.length + added.length;
+    const isOpen = openSections.has(si);
+    const addedHTML = added.map(item=>renderAddedRow(si,item)).join('');
+    const block = document.createElement('div');
+    block.className = 'section-block';
+    block.innerHTML = `
+      <div class="section-header" onclick="toggleSection(${si})">
+        <div class="section-dot"></div>
+        <div class="section-name-display">${sec.header.label}</div>
+        <div class="section-seq">${totalSlots>0?totalFilled+'/'+totalSlots+' filled':'locked'}</div>
+        <div class="section-toggle ${isOpen?'open':''}">&#9660;</div>
+      </div>
+      <div class="section-body" style="${isOpen?'':'display:none'}">
+        <div class="checkpoints-list">${sec.items.map(item=>renderCheckpointRow(item)).join('')}${addedHTML}</div>
+        <button class="add-cp-btn" onclick="addCheckpoint(${si})">+ Add checkpoint</button>
+      </div>`;
+    container.appendChild(block);
+  });
+}
+
+function renderCheckpointRow(item) {
+  if (item.locked) {
+    if (item.typeId==='1') return '';
+    const isUnlocked = !!unlockedState[item.code];
+    const u = isUnlocked ? unlockedState[item.code] : item;
+    const typeLabel = (CHECKPOINT_TYPES.find(t=>t.id===item.typeId)||{}).label||'';
+    if (isUnlocked) {
+      const typeOptions = CHECKPOINT_TYPES.map(t=>`<option value="${t.id}" ${u.typeId===t.id?'selected':''}>${t.label}</option>`).join('');
+      return `<div class="checkpoint-row" style="border-left:2px solid #f0a940;padding-left:6px">
+        <div class="cp-num">${item.seq}</div>
+        <div class="cp-main">
+          <div class="cp-locked-header">
+            <input class="cp-label-input locked-edit" value="${u.label.replace(/"/g,'&quot;')}" oninput="updateUnlocked('${item.code}','label',this.value)" />
+            <button class="unlock-btn unlocked" onclick="toggleUnlock('${item.code}')">&#128275; Unlock</button>
+          </div>
+          <div class="cp-options-row">
+            <select class="cp-type-select" onchange="updateUnlocked('${item.code}','typeId',this.value)">${typeOptions}</select>
+            <input class="cp-autosuggest" placeholder="Button options (e.g. YES NO)" value="${u.autosuggest.replace(/"/g,'&quot;')}" oninput="updateUnlocked('${item.code}','autosuggest',this.value)" />
+            <div class="toggle-group">
+              <button class="toggle-btn ${u.mandatory?'active-m':''}" onclick="toggleUnlockedFlag('${item.code}','mandatory',this)">M</button>
+              <button class="toggle-btn ${u.mandatoryImage?'active-mi':''}" onclick="toggleUnlockedFlag('${item.code}','mandatoryImage',this)">MI</button>
+              <button class="toggle-btn ${u.mandatoryObs?'active-te':''}" onclick="toggleUnlockedFlag('${item.code}','mandatoryObs',this)">TE</button>
+              <button class="toggle-btn ${u.hide?'active-hide':''}" onclick="toggleUnlockedFlag('${item.code}','hide',this)" title="Hide this checkpoint">Hide</button>
+            </div>
+          </div>
+          <input class="cp-visibility" placeholder="Visibility formula (optional)" value="${u.visibilityFormula.replace(/"/g,'&quot;')}" oninput="updateUnlocked('${item.code}','visibilityFormula',this.value)" />
+        </div></div>`;
+    }
+    const shortLabel = item.label;
+    return `<div class="checkpoint-row" style="opacity:0.6">
+      <div class="cp-num">${item.seq}</div>
+      <div class="cp-main"><div class="locked-row">
+        <div class="cp-locked-header">
+          <span class="cp-locked-label">${shortLabel}</span>
+          <button class="unlock-btn" onclick="toggleUnlock('${item.code}')">&#128274; Unlock</button>
+        </div>
+        <div class="locked-badges">
+          <span class="badge-sm" style="background:var(--surface2);color:var(--text3)">${typeLabel}</span>
+          ${item.mandatory?'<span class="badge-sm" style="background:#e8f5e9;color:#2e7d32">M</span>':''}
+          ${item.mandatoryImage?'<span class="badge-sm" style="background:#e3f2fd;color:#1565c0">MI</span>':''}
+          ${item.mandatoryObs?'<span class="badge-sm" style="background:#f3e5f5;color:#6a1b9a">TE</span>':''}
+          ${item.autosuggest?`<span class="badge-sm" style="background:#f0f4ff;color:#3a5fa0;font-family:monospace">${item.autosuggest.length>20?item.autosuggest.slice(0,20)+'…':item.autosuggest}</span>`:''}
+        </div>
+      </div></div></div>`;
+  }
+  const s = state[item.code];
+  const isFilled = s&&s.label.trim().length>0;
+  const typeOptions = CHECKPOINT_TYPES.map(t=>`<option value="${t.id}" ${s.typeId===t.id?'selected':''}>${t.label}</option>`).join('');
+  return `<div class="checkpoint-row">
+    <div class="cp-num">${item.seq}</div>
+    <div class="cp-main">
+      <input class="cp-label-input ${isFilled?'filled':'empty'}" placeholder="Enter checkpoint label… (leave blank to skip)"
+        value="${s.label.replace(/"/g,'&quot;')}"
+        oninput="updateField('${item.code}','label',this.value);this.className='cp-label-input '+(this.value.trim()?'filled':'empty')" />
+      <div class="cp-options-row">
+        <select class="cp-type-select" onchange="updateField('${item.code}','typeId',this.value)">${typeOptions}</select>
+        <input class="cp-autosuggest" placeholder="Button options (e.g. YES NO)" value="${s.autosuggest.replace(/"/g,'&quot;')}" oninput="updateField('${item.code}','autosuggest',this.value)" />
+        <div class="toggle-group">
+          <button class="toggle-btn ${s.mandatory?'active-m':''}" onclick="toggleFlag('${item.code}','mandatory',this)">M</button>
+          <button class="toggle-btn ${s.mandatoryImage?'active-mi':''}" onclick="toggleFlag('${item.code}','mandatoryImage',this)">MI</button>
+          <button class="toggle-btn ${s.mandatoryObs?'active-te':''}" onclick="toggleFlag('${item.code}','mandatoryObs',this)">TE</button>
+          <button class="toggle-btn ${s.hide?'active-hide':''}" onclick="toggleFlag('${item.code}','hide',this)" title="Hide this checkpoint">Hide</button>
+        </div>
+      </div>
+      <input class="cp-visibility" placeholder="Visibility formula (optional)" value="${s.visibilityFormula.replace(/"/g,'&quot;')}" oninput="updateField('${item.code}','visibilityFormula',this.value)" />
+    </div></div>`;
+}
+
+function renderAddedRow(si, item) {
+  const isFilled = item.label.trim().length>0;
+  const typeOptions = CHECKPOINT_TYPES.map(t=>`<option value="${t.id}" ${item.typeId===t.id?'selected':''}>${t.label}</option>`).join('');
+  return `<div class="checkpoint-row" style="border-left:2px solid #a8d5b5;padding-left:6px">
+    <div class="cp-num" style="color:var(--accent2);font-size:10px">${item.code.split('-').pop()}</div>
+    <div class="cp-main">
+      <div class="cp-locked-header">
+        <input class="cp-label-input ${isFilled?'filled':'empty'}" placeholder="New checkpoint label…"
+          value="${item.label.replace(/"/g,'&quot;')}"
+          oninput="updateAdded(${si},'${item.code}','label',this.value);this.className='cp-label-input '+(this.value.trim()?'filled':'empty')" />
+        <button class="unlock-btn" onclick="removeAdded(${si},'${item.code}')" style="color:#c0392b;border-color:#e8a09a">&#10005;</button>
+      </div>
+      <div class="cp-options-row">
+        <select class="cp-type-select" onchange="updateAdded(${si},'${item.code}','typeId',this.value)">${typeOptions}</select>
+        <input class="cp-autosuggest" placeholder="Button options (e.g. YES NO)" value="${item.autosuggest.replace(/"/g,'&quot;')}" oninput="updateAdded(${si},'${item.code}','autosuggest',this.value)" />
+        <div class="toggle-group">
+          <button class="toggle-btn ${item.mandatory?'active-m':''}" onclick="toggleAddedFlag(${si},'${item.code}','mandatory',this)">M</button>
+          <button class="toggle-btn ${item.mandatoryImage?'active-mi':''}" onclick="toggleAddedFlag(${si},'${item.code}','mandatoryImage',this)">MI</button>
+          <button class="toggle-btn ${item.mandatoryObs?'active-te':''}" onclick="toggleAddedFlag(${si},'${item.code}','mandatoryObs',this)">TE</button>
+          <button class="toggle-btn ${item.hide?'active-hide':''}" onclick="toggleAddedFlag(${si},'${item.code}','hide',this)" title="Hide this checkpoint">Hide</button>
+        </div>
+      </div>
+      <input class="cp-visibility" placeholder="Visibility formula (optional)" value="${item.visibilityFormula.replace(/"/g,'&quot;')}" oninput="updateAdded(${si},'${item.code}','visibilityFormula',this.value)" />
+    </div></div>`;
+}
+
+// ---- ACTIONS ----
+function toggleSection(si) {
+  if (openSections.has(si)) openSections.delete(si); else openSections.add(si);
+  renderSections();
+}
+function updateField(code, field, value) { if (state[code]) state[code][field] = value; }
+function toggleFlag(code, field, btn) {
+  if (!state[code]) return;
+  state[code][field] = state[code][field]?0:1;
+  const cm={mandatory:'active-m',mandatoryImage:'active-mi',mandatoryObs:'active-te',hide:'active-hide'};
+  btn.classList.toggle(cm[field]);
+}
+
+function switchTab(tab) {
+  document.getElementById('tab-build').classList.toggle('hidden', tab!=='build');
+  document.getElementById('tab-export').classList.toggle('hidden', tab!=='export');
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',(i===0&&tab==='build')||(i===1&&tab==='export')));
+  if (tab==='export') renderExport();
+}
+
+// ---- EXPORT ----
+function renderExport() {
+  const editItems = TEMPLATE.filter(i=>i.isEdit);
+  const filled = editItems.filter(i=>state[i.code]&&state[i.code].label.trim());
+  const overrideCount = Object.keys(unlockedState).length;
+  const addedCount = Object.values(addedItems).flat().filter(i=>i.label.trim()).length;
+  document.getElementById('summary-grid').innerHTML = `
+    <div class="stat-card"><div class="stat-num">${TEMPLATE.length}</div><div class="stat-label">Total rows</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--accent2)">${filled.length+addedCount}</div><div class="stat-label">Filled slots</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:#2e7d32">${addedCount}</div><div class="stat-label">Added</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:#b45309">${overrideCount}</div><div class="stat-label">Overridden</div></div>`;
+  const tbody = document.getElementById('preview-body');
+  tbody.innerHTML = '';
+  for (const item of TEMPLATE) {
+    const r = resolve(item);
+    const label = r.label||'';
+    const isUnlocked = item.locked&&!!unlockedState[item.code];
+    const isEmpty = !item.locked&&!label.trim();
+    const isSection = item.typeId==='1';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">${item.code}</td>
+      <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${label}">${label||'—'}</td>
+      <td style="font-family:'DM Mono',monospace">${item.seq}</td>
+      <td>${(CHECKPOINT_TYPES.find(t=>t.id===r.typeId)||{}).label||''}</td>
+      <td style="text-align:center">${r.mandatory?'✓':''}</td>
+      <td style="text-align:center">${r.mandatoryImage?'✓':''}</td>
+      <td style="text-align:center">${r.mandatoryObs?'✓':''}</td>
+      <td style="font-size:10px">${r.autosuggest||''}</td>
+      <td>${isSection?'<span class="badge badge-section">Section</span>':isUnlocked?'<span class="badge badge-overridden">Overridden</span>':item.locked?'<span class="badge badge-locked">Locked</span>':isEmpty?'<span class="badge badge-edit">EDIT</span>':'<span class="badge badge-filled">Filled</span>'}</td>`;
+    tbody.appendChild(tr);
+  }
+  // Added rows in preview
+  const sections = getSections();
+  sections.forEach((sec,si) => {
+    (addedItems[si]||[]).filter(i=>i.label.trim()).forEach(item => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td style="font-size:10px;color:var(--accent2);font-family:'DM Mono',monospace">${item.code}</td>
+        <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${item.label}</td>
+        <td>—</td><td>Standard</td>
+        <td style="text-align:center">${item.mandatory?'✓':''}</td>
+        <td style="text-align:center">${item.mandatoryImage?'✓':''}</td>
+        <td style="text-align:center">${item.mandatoryObs?'✓':''}</td>
+        <td style="font-size:10px">${item.autosuggest||''}</td>
+        <td><span class="badge badge-added">Added</span></td>`;
+      tbody.appendChild(tr);
+    });
+  });
+}
+
+function csvEscape(val) {
+  if (val===null||val===undefined) return '';
+  const s = String(val);
+  if (s.includes(',')||s.includes('"')||s.includes('\n')) return '"'+s.replace(/"/g,'""')+'"';
+  return s;
+}
+
+function exportCSV() {
+  const headers = ['TaskCode','CheckpointCode','CheckpointLabel','DisplaySequence','Hide','FTQInspectorTypeID','FTQCheckpointTypeID','CommunityCode','DataValue1','DataValue2','DataValue3','DataValue4','DataValue5','ExternKey','ExternKeyID','ParentCheckpointCode','AutosuggestOptions','TradeCode','DefaultNote','IsAOButtons','IsMandatory','IsMandatoryImage','IsMandatoryObservation','IsMandatoryCorrectiveActionNotes','IsMandatoryReasonCode','IsMandatoryCorrectiveActionCode','NoteFormula','VisibilityFormula','EditabilityFormula','CopyMode','ImportMode'];
+  const rows = [headers.join(',')];
+  const sections = getSections();
+  // PVI uses 3 DataValues (1,100,0); QCON uses 4 (1,1,100,0)
+  const isPVI = TEMPLATE_TYPE === 'V';
+  const dvTemplate = isPVI ? [1,100,0,'',''] : [1,1,100,0,''];
+  for (const item of TEMPLATE) {
+    const r = resolve(item);
+    const label = (r.label||'').trim();
+    if (!item.locked&&!label) continue;
+    const isAOButtons = item.isAOButtons||0;
+    const hide = r.hide||0;
+    rows.push([TASK_CODE,item.code,label,item.seq,hide,'',r.typeId,'',...dvTemplate,'','','',r.autosuggest||'','','',isAOButtons,r.mandatory,r.mandatoryImage,r.mandatoryObs,r.mandatoryNotes||0,0,0,'',r.visibilityFormula||'','',0,0].map(csvEscape).join(','));
+  }
+  sections.forEach((sec,si) => {
+    const added = (addedItems[si]||[]).filter(i=>i.label.trim());
+    const allSeqs = sec.items.map(i=>i.seq);
+    let seqBase = allSeqs.length?Math.max(...allSeqs):0;
+    added.forEach(item => {
+      seqBase += 5;
+      rows.push([TASK_CODE,item.code,item.label.trim(),seqBase,item.hide||0,'','2','',...dvTemplate,'','','',item.autosuggest||'','','',0,item.mandatory,item.mandatoryImage,item.mandatoryObs,0,0,0,'',item.visibilityFormula||'','',0,0].map(csvEscape).join(','));
+    });
+  });
+  const blob = new Blob([rows.join('\n')],{type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `${TASK_CODE}_checklist.csv`; a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
