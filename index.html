@@ -97,6 +97,17 @@
   .add-cp-btn { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 8px; margin-top: 8px; background: none; border: 1.5px dashed var(--border); border-radius: 7px; font-size: 12px; color: var(--text3); cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
   .add-cp-btn:hover { border-color: var(--accent2); color: var(--accent2); background: var(--accent-light); }
 
+  .validation-error { font-size: 11px; color: #b92c2c; background: #fdf0f0; border: 1px solid #f5c6c6; border-radius: 4px; padding: 4px 8px; margin-top: 2px; display: flex; align-items: flex-start; gap: 5px; line-height: 1.5; }
+  .validation-warn { font-size: 11px; color: #92400e; background: #fffbeb; border: 1px solid #fde68a; border-radius: 4px; padding: 4px 8px; margin-top: 2px; display: flex; align-items: flex-start; gap: 5px; line-height: 1.5; }
+  .cp-label-input.has-error { border-color: #e53e3e !important; background: #fff8f8 !important; }
+  .cp-label-input.has-warn { border-color: #d97706 !important; background: #fffdf5 !important; }
+  .export-blocked { background: #fdf0f0; border: 1px solid #f5c6c6; border-radius: 10px; padding: 18px 20px; margin-bottom: 20px; }
+  .export-blocked h4 { font-size: 14px; font-weight: 600; color: #b92c2c; margin-bottom: 10px; }
+  .export-blocked ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  .export-blocked li { font-size: 12px; color: #7f1d1d; display: flex; gap: 8px; align-items: baseline; }
+  .export-blocked li span.code { font-family: 'DM Mono', monospace; background: #fee2e2; padding: 1px 5px; border-radius: 3px; font-size: 11px; flex-shrink: 0; }
+  .export-blocked li span.msg { color: #92400e; }
+
   .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
   .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; text-align: center; }
   .stat-num { font-size: 28px; font-weight: 600; color: var(--accent); font-family: 'DM Mono', monospace; line-height: 1; margin-bottom: 4px; }
@@ -197,6 +208,7 @@
     </div>
     <div id="tab-export" class="hidden">
       <div class="summary-grid" id="summary-grid"></div>
+      <div id="validation-panel"></div>
       <div class="export-card">
         <div><h3>Export to FTQ360 CSV</h3><p>Downloads a complete checklist file ready for import</p></div>
         <button class="export-btn" onclick="exportCSV()">&#8659; Download CSV</button>
@@ -440,6 +452,8 @@ function startEditor() {
   state = {};
   unlockedState = {};
   addedItems = {};
+  // Clear validation state
+  Object.keys(validationErrors).forEach(k => delete validationErrors[k]);
   openSections.clear();
   openSections.add(0);
 
@@ -508,7 +522,7 @@ function addCheckpoint(si) {
 
 function updateAdded(si, code, field, value) {
   const item = (addedItems[si]||[]).find(i=>i.code===code);
-  if (item) item[field] = value;
+  if (item) { item[field] = value; if (field==='label') runValidation(code, value); }
 }
 
 function toggleAddedFlag(si, code, field, btn) {
@@ -541,7 +555,7 @@ function toggleUnlock(code) {
   renderSections();
 }
 
-function updateUnlocked(code, field, value) { if (unlockedState[code]) unlockedState[code][field] = value; }
+function updateUnlocked(code, field, value) { if (unlockedState[code]) { unlockedState[code][field] = value; if (field==='label') runValidation(code, value); } }
 
 function toggleUnlockedFlag(code, field, btn) {
   if (!unlockedState[code]) return;
@@ -588,13 +602,19 @@ function renderCheckpointRow(item) {
     const typeLabel = (CHECKPOINT_TYPES.find(t=>t.id===item.typeId)||{}).label||'';
     if (isUnlocked) {
       const typeOptions = CHECKPOINT_TYPES.map(t=>`<option value="${t.id}" ${u.typeId===t.id?'selected':''}>${t.label}</option>`).join('');
+      const uValId = 'val-' + item.code.replace(/[^a-zA-Z0-9]/g,'-');
+      const uIssues = validationErrors[item.code] || [];
+      const uHasError = uIssues.some(i=>i.type==='error');
+      const uHasWarn = uIssues.some(i=>i.type==='warn');
+      const uCls = 'cp-label-input locked-edit'+(uHasError?' has-error':uHasWarn?' has-warn':'');
       return `<div class="checkpoint-row" style="border-left:2px solid #f0a940;padding-left:6px">
         <div class="cp-num">${item.seq}</div>
         <div class="cp-main">
           <div class="cp-locked-header">
-            <input class="cp-label-input locked-edit" value="${u.label.replace(/"/g,'&quot;')}" oninput="updateUnlocked('${item.code}','label',this.value)" />
+            <input class="${uCls}" value="${u.label.replace(/"/g,'&quot;')}" oninput="updateUnlocked('${item.code}','label',this.value)" />
             <button class="unlock-btn unlocked" onclick="toggleUnlock('${item.code}')">&#128275; Unlock</button>
           </div>
+          <div id="${uValId}">${renderValidationMessages(uIssues)}</div>
           <div class="cp-options-row">
             <select class="cp-type-select" onchange="updateUnlocked('${item.code}','typeId',this.value)">${typeOptions}</select>
             <input class="cp-autosuggest" placeholder="Button options (e.g. YES NO)" value="${u.autosuggest.replace(/"/g,'&quot;')}" oninput="updateUnlocked('${item.code}','autosuggest',this.value)" />
@@ -628,12 +648,19 @@ function renderCheckpointRow(item) {
   const s = state[item.code];
   const isFilled = s&&s.label.trim().length>0;
   const typeOptions = CHECKPOINT_TYPES.map(t=>`<option value="${t.id}" ${s.typeId===t.id?'selected':''}>${t.label}</option>`).join('');
+  const valId = 'val-' + item.code.replace(/[^a-zA-Z0-9]/g,'-');
+  const inpId = 'inp-' + item.code.replace(/[^a-zA-Z0-9]/g,'-');
+  const existingIssues = validationErrors[item.code] || [];
+  const hasError = existingIssues.some(i=>i.type==='error');
+  const hasWarn = existingIssues.some(i=>i.type==='warn');
+  const inputClass = 'cp-label-input ' + (isFilled?'filled':'empty') + (hasError?' has-error':hasWarn?' has-warn':'');
   return `<div class="checkpoint-row">
     <div class="cp-num">${item.seq}</div>
     <div class="cp-main">
-      <input class="cp-label-input ${isFilled?'filled':'empty'}" placeholder="Enter checkpoint label… (leave blank to skip)"
+      <input id="${inpId}" class="${inputClass}" placeholder="Enter checkpoint label… (leave blank to skip)"
         value="${s.label.replace(/"/g,'&quot;')}"
-        oninput="updateField('${item.code}','label',this.value);this.className='cp-label-input '+(this.value.trim()?'filled':'empty')" />
+        oninput="updateField('${item.code}','label',this.value);this.className='cp-label-input '+(this.value.trim()?'filled':'empty')+(validationErrors['${item.code}']?(validationErrors['${item.code}'].some(i=>i.type==='error')?' has-error':' has-warn'):'')" />
+      <div id="${valId}">${renderValidationMessages(existingIssues)}</div>
       <div class="cp-options-row">
         <select class="cp-type-select" onchange="updateField('${item.code}','typeId',this.value)">${typeOptions}</select>
         <input class="cp-autosuggest" placeholder="Button options (e.g. YES NO)" value="${s.autosuggest.replace(/"/g,'&quot;')}" oninput="updateField('${item.code}','autosuggest',this.value)" />
@@ -651,15 +678,21 @@ function renderCheckpointRow(item) {
 function renderAddedRow(si, item) {
   const isFilled = item.label.trim().length>0;
   const typeOptions = CHECKPOINT_TYPES.map(t=>`<option value="${t.id}" ${item.typeId===t.id?'selected':''}>${t.label}</option>`).join('');
+  const aValId = 'val-' + item.code.replace(/[^a-zA-Z0-9]/g,'-');
+  const aIssues = validationErrors[item.code] || [];
+  const aHasError = aIssues.some(i=>i.type==='error');
+  const aHasWarn = aIssues.some(i=>i.type==='warn');
+  const aCls = 'cp-label-input '+(isFilled?'filled':'empty')+(aHasError?' has-error':aHasWarn?' has-warn':'');
   return `<div class="checkpoint-row" style="border-left:2px solid #a8d5b5;padding-left:6px">
     <div class="cp-num" style="color:var(--accent2);font-size:10px">${item.code.split('-').pop()}</div>
     <div class="cp-main">
       <div class="cp-locked-header">
-        <input class="cp-label-input ${isFilled?'filled':'empty'}" placeholder="New checkpoint label…"
+        <input class="${aCls}" placeholder="New checkpoint label…"
           value="${item.label.replace(/"/g,'&quot;')}"
-          oninput="updateAdded(${si},'${item.code}','label',this.value);this.className='cp-label-input '+(this.value.trim()?'filled':'empty')" />
+          oninput="updateAdded(${si},'${item.code}','label',this.value);this.className='cp-label-input '+(this.value.trim()?'filled':'empty')+(validationErrors['${item.code}']?(validationErrors['${item.code}'].some(i=>i.type==='error')?' has-error':' has-warn'):'')" />
         <button class="unlock-btn" onclick="removeAdded(${si},'${item.code}')" style="color:#c0392b;border-color:#e8a09a">&#10005;</button>
       </div>
+      <div id="${aValId}">${renderValidationMessages(aIssues)}</div>
       <div class="cp-options-row">
         <select class="cp-type-select" onchange="updateAdded(${si},'${item.code}','typeId',this.value)">${typeOptions}</select>
         <input class="cp-autosuggest" placeholder="Button options (e.g. YES NO)" value="${item.autosuggest.replace(/"/g,'&quot;')}" oninput="updateAdded(${si},'${item.code}','autosuggest',this.value)" />
@@ -674,12 +707,217 @@ function renderAddedRow(si, item) {
     </div></div>`;
 }
 
+// ---- VALIDATION ----
+// Common FTQ/inspection words the spell-checker shouldn't flag
+const DOMAIN_WORDS = new Set([
+  'ftq','ftq360','pnnl','pnwl','ashrae','ahri','upc','hvac','hvc','env','ena','plu','sgn','qcon','pvi',
+  'geotagged','geotagging','nameplate','nameplates','dropbox','checklist','checklists',
+  'wattage','watt','watts','btu','btus','kw','kwh','afue','seer','eer','hspf','cop',
+  'condensate','retrofit','subcontractor','subcontractors','pre','post','multi','multi-family',
+  'ductless','ducted','ductwork','airhandler','airflow','cfm','weatherization',
+  'egis','iesp','hear','homes','rgc','qcon','rgi','RI','installer','installers',
+  'unvented','vented','un-vented','insulation','weatherstrip','caulk','caulking',
+  'blower','blowerdoor','blower-door','manometer','depressurization','pressurization',
+  'airtightness','infiltration','exfiltration','combustion','appliance','appliances',
+  'photodocument','upload','uploads','uploading','dropdown','picklist','hamburger',
+  'energyguide','energystar','gfci','afci','nec','na','ok','pdf','jpeg','jpg','png',
+  'sq','ft','sqft','lbs','psi','mph','rpm','hz','ac','dc','amp','amps','volt','volts',
+  'thermostat','thermostats','setpoint','setback','programmable','smart',
+  'waterheater','water-heater','heatpump','heat-pump','boiler','furnace','minisplit',
+  'mini-split','refrigerant','r22','r410a','r32','hcfc','hfc',
+  'leakage','spillage','venting','undiluted','diluted','flue','plenum',
+  'homeowner','renter','tenant','occupant','inspector','verification','verifying',
+  'datetime','timestamp','timezone','utc','est','cst','mst','pst',
+]);
+
+const validationErrors = {}; // code -> [{type:'error'|'warn', msg}]
+
+function validateLabel(label) {
+  if (!label || !label.trim()) return [];
+  const issues = [];
+  const t = label; // don't auto-trim — trailing space is itself an error
+
+  // 1. Trailing whitespace
+  if (t !== t.trimEnd()) {
+    issues.push({type:'error', msg:'Trailing space at end of text.'});
+  }
+
+  // 2. Double (or more) spaces
+  if (/  +/.test(t)) {
+    issues.push({type:'error', msg:'Extra space detected — contains two or more consecutive spaces.'});
+  }
+
+  // 3. Space before punctuation
+  if (/ [.,;:!?)]/.test(t)) {
+    issues.push({type:'error', msg:'Space before punctuation mark (e.g. "word ," should be "word,").'});
+  }
+
+  // 4. Missing capital at start (ignore codes like "21-HVC")
+  const first = t.trimStart()[0];
+  if (first && first === first.toLowerCase() && /[a-z]/.test(first)) {
+    issues.push({type:'warn', msg:'Label should start with a capital letter.'});
+  }
+
+  // 5. Missing period at end for full sentences (heuristic: >4 words, ends without punctuation)
+  const trimmed = t.trim();
+  const wordCount = trimmed.split(/\s+/).length;
+  const endsWithPunct = /[.?!]$/.test(trimmed);
+  if (wordCount >= 5 && !endsWithPunct) {
+    issues.push({type:'warn', msg:'Long label does not end with punctuation — add a period if this is a full sentence.'});
+  }
+
+  // 6. Spell check via textarea spellcheck attribute (browser-native)
+  // We do this via a lightweight manual check on each word
+  const words = trimmed.replace(/[^a-zA-Z\s'-]/g,'').split(/\s+/);
+  const misspelled = [];
+  for (const raw of words) {
+    const word = raw.replace(/^['-]+|['-]+$/g,'').toLowerCase();
+    if (!word || word.length <= 2) continue;
+    if (DOMAIN_WORDS.has(word)) continue;
+    // Use browser spell check by checking against a hidden textarea
+    if (typeof document !== 'undefined' && _spellEl) {
+      _spellEl.value = word;
+      if (_spellEl.value && typeof _spellEl.selectionStart === 'number') {
+        // Can't programmatically read spell-check — use Intl approach instead
+      }
+    }
+  }
+
+  return issues;
+}
+
+// Browser spell check via hidden contenteditable — we read spellcheck results
+// via the browser's built-in spellcheck on a hidden input
+let _spellEl = null;
+function initSpellCheck() {
+  _spellEl = document.createElement('textarea');
+  _spellEl.style.cssText = 'position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0';
+  _spellEl.setAttribute('spellcheck','true');
+  _spellEl.setAttribute('lang','en');
+  document.body.appendChild(_spellEl);
+}
+
+// Since browser spellcheck results aren't programmatically readable,
+// we use a curated common-misspelling dictionary instead
+const COMMON_MISSPELLINGS = {
+  'accomodate':'accommodate','accomodation':'accommodation','acheive':'achieve',
+  'accross':'across','agressive':'aggressive','appearence':'appearance',
+  'arguement':'argument','begining':'beginning','beleive':'believe',
+  'calender':'calendar','carefull':'careful','carefuly':'carefully',
+  'checkt':'check','compleate':'complete','completd':'completed',
+  'completly':'completely','complettion':'completion','confrim':'confirm',
+  'contians':'contains','corespond':'correspond','damanged':'damaged',
+  'desciption':'description','deterioated':'deteriorated','documant':'document',
+  'documantation':'documentation','documentaton':'documentation',
+  'eqipment':'equipment','equipement':'equipment','equipmnet':'equipment',
+  'existng':'existing','exsiting':'existing','exsting':'existing',
+  'gaurantee':'guarantee','guarentee':'guarantee',
+  'imediately':'immediately','immedietly':'immediately',
+  'improperly':'improperly','inproper':'improper','insepction':'inspection',
+  'inspcetion':'inspection','instllation':'installation','instalation':'installation',
+  'installtion':'installation','installatoin':'installation',
+  'insulation':'insulation','insurace':'insurance',
+  'loacation':'location','locaton':'location','locaiton':'location',
+  'maintanance':'maintenance','maintenence':'maintenance','maintenace':'maintenance',
+  'measurment':'measurement','measurment':'measurement',
+  'manuafcturer':'manufacturer','manufactuer':'manufacturer','maufacturer':'manufacturer',
+  'modlel':'model','modle':'model',
+  'neccessary':'necessary','necesary':'necessary',
+  'occured':'occurred','occurance':'occurrence',
+  'performace':'performance','performnce':'performance',
+  'photograh':'photograph','photgraphy':'photography',
+  'postion':'position','poistion':'position',
+  'propperly':'properly','proprely':'properly','proprly':'properly',
+  'reccomend':'recommend','recomend':'recommend',
+  'refernce':'reference','referance':'reference',
+  'reqiured':'required','requried':'required','requred':'required','requirred':'required',
+  'serail':'serial','seral':'serial','seiral':'serial',
+  'specifc':'specific','speciify':'specify','speficied':'specified',
+  'sumbmit':'submit','submitt':'submit',
+  'temperture':'temperature','temparature':'temperature',
+  'thoroghly':'thoroughly','througout':'throughout',
+  'unexpcted':'unexpected','unexepected':'unexpected',
+  'varify':'verify','verifiy':'verify','varification':'verification','verifcation':'verification',
+  'warrenty':'warranty','waranty':'warranty','warrnty':'warranty',
+  'wokr':'work','wrk':'work',
+};
+
+function spellCheckLabel(label) {
+  if (!label || !label.trim()) return [];
+  const words = label.replace(/[^a-zA-Z\s'-]/g,' ').split(/\s+/);
+  const found = [];
+  for (const raw of words) {
+    const word = raw.replace(/^['-]+|['-]+$/g,'').toLowerCase();
+    if (!word || word.length <= 2) continue;
+    if (DOMAIN_WORDS.has(word)) continue;
+    if (COMMON_MISSPELLINGS[word]) {
+      found.push({type:'error', msg:`"${raw}" may be misspelled — did you mean "${COMMON_MISSPELLINGS[word]}"?`});
+    }
+  }
+  return found;
+}
+
+function runValidation(code, label) {
+  const issues = [...validateLabel(label), ...spellCheckLabel(label)];
+  if (issues.length === 0) {
+    delete validationErrors[code];
+  } else {
+    validationErrors[code] = issues;
+  }
+  // Update inline display without full re-render
+  const el = document.getElementById('val-' + code.replace(/[^a-zA-Z0-9]/g,'-'));
+  if (el) {
+    el.innerHTML = renderValidationMessages(issues);
+  }
+  // Update input border class
+  const input = document.getElementById('inp-' + code.replace(/[^a-zA-Z0-9]/g,'-'));
+  if (input) {
+    const hasError = issues.some(i=>i.type==='error');
+    const hasWarn = issues.some(i=>i.type==='warn');
+    const base = label.trim() ? 'filled' : 'empty';
+    input.className = 'cp-label-input ' + base + (hasError?' has-error':hasWarn?' has-warn':'');
+  }
+}
+
+function renderValidationMessages(issues) {
+  if (!issues || issues.length === 0) return '';
+  return issues.map(i =>
+    `<div class="validation-${i.type}"><span>${i.type==='error'?'✕':'⚠'}</span><span>${i.msg}</span></div>`
+  ).join('');
+}
+
+function getAllValidationIssues() {
+  const all = [];
+  // State (edit slots)
+  for (const [code, s] of Object.entries(state)) {
+    if (!s.label.trim()) continue;
+    const issues = [...validateLabel(s.label), ...spellCheckLabel(s.label)];
+    if (issues.length) all.push({code, label: s.label, issues});
+  }
+  // Unlocked
+  for (const [code, u] of Object.entries(unlockedState)) {
+    const issues = [...validateLabel(u.label), ...spellCheckLabel(u.label)];
+    if (issues.length) all.push({code, label: u.label, issues});
+  }
+  // Added
+  for (const [si, items] of Object.entries(addedItems)) {
+    for (const item of items) {
+      if (!item.label.trim()) continue;
+      const issues = [...validateLabel(item.label), ...spellCheckLabel(item.label)];
+      if (issues.length) all.push({code: item.code, label: item.label, issues});
+    }
+  }
+  return all;
+}
+
 // ---- ACTIONS ----
 function toggleSection(si) {
   if (openSections.has(si)) openSections.delete(si); else openSections.add(si);
   renderSections();
 }
-function updateField(code, field, value) { if (state[code]) state[code][field] = value; }
+function updateField(code, field, value) {
+  if (state[code]) { state[code][field] = value; if (field==='label') runValidation(code, value); }
+}
 function toggleFlag(code, field, btn) {
   if (!state[code]) return;
   state[code][field] = state[code][field]?0:1;
@@ -700,11 +938,35 @@ function renderExport() {
   const filled = editItems.filter(i=>state[i.code]&&state[i.code].label.trim());
   const overrideCount = Object.keys(unlockedState).length;
   const addedCount = Object.values(addedItems).flat().filter(i=>i.label.trim()).length;
+  const allIssues = getAllValidationIssues();
+  const errorCount = allIssues.reduce((n,e)=>n+e.issues.filter(i=>i.type==='error').length,0);
+  const warnCount  = allIssues.reduce((n,e)=>n+e.issues.filter(i=>i.type==='warn').length,0);
+
   document.getElementById('summary-grid').innerHTML = `
     <div class="stat-card"><div class="stat-num">${TEMPLATE.length}</div><div class="stat-label">Total rows</div></div>
     <div class="stat-card"><div class="stat-num" style="color:var(--accent2)">${filled.length+addedCount}</div><div class="stat-label">Filled slots</div></div>
     <div class="stat-card"><div class="stat-num" style="color:#2e7d32">${addedCount}</div><div class="stat-label">Added</div></div>
-    <div class="stat-card"><div class="stat-num" style="color:#b45309">${overrideCount}</div><div class="stat-label">Overridden</div></div>`;
+    <div class="stat-card"><div class="stat-num" style="color:${errorCount>0?'#b92c2c':warnCount>0?'#92400e':'var(--text3)'}">${errorCount+warnCount}</div><div class="stat-label">${errorCount>0?'Errors':'Warnings'}</div></div>`;
+
+  // Validation panel
+  const validPanel = document.getElementById('validation-panel');
+  if (allIssues.length > 0) {
+    const items = allIssues.map(e => {
+      const errMsgs = e.issues.map(i =>
+        `<li><span class="code">${e.code}</span> <span class="msg" style="color:${i.type==='error'?'#b92c2c':'#92400e'}">${i.type==='error'?'✕':'⚠'} ${i.msg}</span></li>`
+      ).join('');
+      return errMsgs;
+    }).join('');
+    validPanel.innerHTML = `
+      <div class="export-blocked">
+        <h4>${errorCount > 0 ? `${errorCount} error${errorCount>1?'s':''} must be fixed before exporting` : `${warnCount} warning${warnCount>1?'s':''} — review before exporting`}</h4>
+        <ul>${items}</ul>
+        ${errorCount > 0 ? '' : '<p style="font-size:12px;color:var(--text2);margin-top:10px">Warnings won\'t block export — click Download CSV to proceed anyway.</p>'}
+      </div>`;
+  } else {
+    validPanel.innerHTML = '';
+  }
+
   const tbody = document.getElementById('preview-body');
   tbody.innerHTML = '';
   for (const item of TEMPLATE) {
@@ -713,7 +975,12 @@ function renderExport() {
     const isUnlocked = item.locked&&!!unlockedState[item.code];
     const isEmpty = !item.locked&&!label.trim();
     const isSection = item.typeId==='1';
+    const hasIssues = validationErrors[item.code];
+    const isError = hasIssues&&hasIssues.some(i=>i.type==='error');
+    const isWarn  = hasIssues&&hasIssues.some(i=>i.type==='warn');
     const tr = document.createElement('tr');
+    if (isError) tr.style.background='#fff8f8';
+    else if (isWarn) tr.style.background='#fffdf0';
     tr.innerHTML = `<td style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">${item.code}</td>
       <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${label}">${label||'—'}</td>
       <td style="font-family:'DM Mono',monospace">${item.seq}</td>
@@ -722,14 +989,19 @@ function renderExport() {
       <td style="text-align:center">${r.mandatoryImage?'✓':''}</td>
       <td style="text-align:center">${r.mandatoryObs?'✓':''}</td>
       <td style="font-size:10px">${r.autosuggest||''}</td>
-      <td>${isSection?'<span class="badge badge-section">Section</span>':isUnlocked?'<span class="badge badge-overridden">Overridden</span>':item.locked?'<span class="badge badge-locked">Locked</span>':isEmpty?'<span class="badge badge-edit">EDIT</span>':'<span class="badge badge-filled">Filled</span>'}</td>`;
+      <td>${isSection?'<span class="badge badge-section">Section</span>':isError?'<span class="badge" style="background:#fee2e2;color:#b92c2c">Error</span>':isWarn?'<span class="badge" style="background:#fffbeb;color:#92400e">Warning</span>':isUnlocked?'<span class="badge badge-overridden">Overridden</span>':item.locked?'<span class="badge badge-locked">Locked</span>':isEmpty?'<span class="badge badge-edit">EDIT</span>':'<span class="badge badge-filled">Filled</span>'}</td>`;
     tbody.appendChild(tr);
   }
   // Added rows in preview
   const sections = getSections();
   sections.forEach((sec,si) => {
     (addedItems[si]||[]).filter(i=>i.label.trim()).forEach(item => {
+      const hasIssues = validationErrors[item.code];
+      const isError = hasIssues&&hasIssues.some(i=>i.type==='error');
+      const isWarn  = hasIssues&&hasIssues.some(i=>i.type==='warn');
       const tr = document.createElement('tr');
+      if (isError) tr.style.background='#fff8f8';
+      else if (isWarn) tr.style.background='#fffdf0';
       tr.innerHTML = `<td style="font-size:10px;color:var(--accent2);font-family:'DM Mono',monospace">${item.code}</td>
         <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${item.label}</td>
         <td>—</td><td>Standard</td>
@@ -737,7 +1009,7 @@ function renderExport() {
         <td style="text-align:center">${item.mandatoryImage?'✓':''}</td>
         <td style="text-align:center">${item.mandatoryObs?'✓':''}</td>
         <td style="font-size:10px">${item.autosuggest||''}</td>
-        <td><span class="badge badge-added">Added</span></td>`;
+        <td>${isError?'<span class="badge" style="background:#fee2e2;color:#b92c2c">Error</span>':isWarn?'<span class="badge" style="background:#fffbeb;color:#92400e">Warning</span>':'<span class="badge badge-added">Added</span>'}</td>`;
       tbody.appendChild(tr);
     });
   });
@@ -751,10 +1023,16 @@ function csvEscape(val) {
 }
 
 function exportCSV() {
+  // Block on errors (warnings are allowed through)
+  const allIssues = getAllValidationIssues();
+  const errorCount = allIssues.reduce((n,e)=>n+e.issues.filter(i=>i.type==='error').length,0);
+  if (errorCount > 0) {
+    alert(`Please fix ${errorCount} error${errorCount>1?'s':''} before downloading. See the issues listed above.`);
+    return;
+  }
   const headers = ['TaskCode','CheckpointCode','CheckpointLabel','DisplaySequence','Hide','FTQInspectorTypeID','FTQCheckpointTypeID','CommunityCode','DataValue1','DataValue2','DataValue3','DataValue4','DataValue5','ExternKey','ExternKeyID','ParentCheckpointCode','AutosuggestOptions','TradeCode','DefaultNote','IsAOButtons','IsMandatory','IsMandatoryImage','IsMandatoryObservation','IsMandatoryCorrectiveActionNotes','IsMandatoryReasonCode','IsMandatoryCorrectiveActionCode','NoteFormula','VisibilityFormula','EditabilityFormula','CopyMode','ImportMode'];
   const rows = [headers.join(',')];
   const sections = getSections();
-  // PVI uses 3 DataValues (1,100,0); QCON uses 4 (1,1,100,0)
   const isPVI = TEMPLATE_TYPE === 'V';
   const dvTemplate = isPVI ? [1,100,0,'',''] : [1,1,100,0,''];
   for (const item of TEMPLATE) {
