@@ -133,6 +133,12 @@
   .badge-overridden { background: #fff0e0; color: #b45309; }
   .badge-added { background: #e8f5e9; color: #2e7d32; }
   .hidden { display: none; }
+
+  .save-load-bar { display: flex; gap: 8px; align-items: center; padding: 8px 32px; background: #0d2318; border-bottom: 1px solid #1a3a2a; }
+  .save-btn { padding: 6px 14px; background: none; border: 1px solid #3a6a50; border-radius: 6px; color: #7aad90; font-size: 12px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; display: flex; align-items: center; gap: 5px; }
+  .save-btn:hover { background: #1a3a2a; color: #a0c4b0; border-color: #5bc88a; }
+  .save-load-hint { font-size: 11px; color: #3a6a50; margin-left: 4px; font-family: 'DM Mono', monospace; }
+  .load-input { display: none; }
 </style>
 </head>
 <body>
@@ -145,6 +151,13 @@
 <div class="tabs" id="tabs-bar" style="display:none">
   <div class="tab active" onclick="switchTab('build')">Build Checklist</div>
   <div class="tab" onclick="switchTab('export')">Preview &amp; Export</div>
+</div>
+
+<div class="save-load-bar" id="save-load-bar" style="display:none">
+  <button class="save-btn" onclick="saveProgress()">&#128190; Save Progress</button>
+  <button class="save-btn" onclick="document.getElementById('load-input').click()">&#128194; Load Progress</button>
+  <input type="file" id="load-input" class="load-input" accept=".json" onchange="loadProgress(event)" />
+  <span class="save-load-hint">Passing this off to someone else? Save your progress and send them the file.</span>
 </div>
 
 <div class="main">
@@ -200,7 +213,10 @@
     <div id="tab-build">
       <div class="instructions">
         <strong>How this works:</strong> Greyed-out rows are locked template items — click <strong>Unlock</strong> to edit them. Yellow-bordered <span style="background:#fff3cd;color:#856404;padding:1px 5px;border-radius:3px;font-size:11px;font-weight:600;">EDIT</span> slots are yours to fill in. Use <strong>+ Add checkpoint</strong> at the bottom of any section to add new rows. Go to <strong>Preview &amp; Export</strong> when ready.
-        <div style="margin-top:10px;padding:10px 12px;background:#e8f4f0;border-radius:6px;border:1px solid #b0d9cc;font-size:13px;color:#1a3a2a;">
+        <div style="margin-top:10px;padding:10px 12px;background:#f0f4ff;border-radius:6px;border:1px solid #c8d6f0;font-size:13px;color:#1b2a4a;">
+          &#129309; <strong>Sharing with someone?</strong> Click <strong>&#128190; Save Progress</strong> in the bar above, then email them the <code style="background:#e0e8f8;padding:1px 5px;border-radius:3px;font-size:11px">.json</code> file. They open this tool, click <strong>&#128194; Load Progress</strong>, and pick up right where you left off.
+        </div>
+        <div style="margin-top:8px;padding:10px 12px;background:#e8f4f0;border-radius:6px;border:1px solid #b0d9cc;font-size:13px;color:#1a3a2a;">
           &#128231; When complete, email your downloaded CSV to <strong><a href="mailto:kyla.jang@egis-group.com" style="color:#1a3a2a;">kyla.jang@egis-group.com</a></strong>
         </div>
         <div class="legend">
@@ -516,6 +532,7 @@ function startEditor() {
   document.getElementById('selector-screen').classList.add('hidden');
   document.getElementById('editor-screen').classList.remove('hidden');
   document.getElementById('tabs-bar').style.display = 'flex';
+  document.getElementById('save-load-bar').style.display = 'flex';
   switchTab('build');
   renderSections();
 }
@@ -525,12 +542,83 @@ function goHome() {
   document.getElementById('selector-screen').classList.remove('hidden');
   document.getElementById('editor-screen').classList.add('hidden');
   document.getElementById('tabs-bar').style.display = 'none';
+  document.getElementById('save-load-bar').style.display = 'none';
   document.getElementById('header-meta').textContent = 'IESP · QCON';
   document.getElementById('checklist-select').value = '';
   document.getElementById('custom-name-row').style.display = 'none';
   document.getElementById('start-btn').disabled = true;
   document.getElementById('custom-measure-input').value = '';
   CUSTOM_MEASURE = '';
+}
+
+// ---- SAVE / LOAD ----
+function saveProgress() {
+  const payload = {
+    version: 1,
+    taskCode: TASK_CODE,
+    templateType: TEMPLATE_TYPE,
+    customMeasure: CUSTOM_MEASURE,
+    state: state,
+    unlockedState: unlockedState,
+    addedItems: addedItems,
+    savedAt: new Date().toISOString()
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `progress_${TASK_CODE}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function loadProgress(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const payload = JSON.parse(e.target.result);
+      if (!payload.taskCode || !payload.templateType) {
+        alert('This file doesn\'t look like a valid progress file. Please check you selected the right file.');
+        return;
+      }
+      // Restore state
+      TASK_CODE = payload.taskCode;
+      TEMPLATE_TYPE = payload.templateType;
+      CUSTOM_MEASURE = payload.customMeasure || '';
+      TEMPLATE = TEMPLATE_TYPE === 'V' ? buildPVITemplate(TASK_CODE) : buildTemplate(TASK_CODE);
+      state = payload.state || {};
+      unlockedState = payload.unlockedState || {};
+      addedItems = payload.addedItems || {};
+      Object.keys(validationErrors).forEach(k => delete validationErrors[k]);
+      openSections.clear();
+      openSections.add(0);
+      // Make sure any edit slots not in saved state get defaults
+      TEMPLATE.filter(t => t.isEdit).forEach(t => {
+        if (!state[t.code]) state[t.code] = {label:'',typeId:'2',mandatory:1,mandatoryImage:0,mandatoryObs:0,autosuggest:'',visibilityFormula:'',hide:0};
+      });
+      // Re-run validation on all filled labels
+      Object.entries(state).forEach(([code, s]) => { if (s.label) runValidation(code, s.label); });
+      Object.entries(unlockedState).forEach(([code, u]) => { if (u.label) runValidation(code, u.label); });
+      // Update UI
+      const name = CHECKLIST_NAMES[TASK_CODE] || TASK_CODE;
+      document.getElementById('header-meta').textContent = TASK_CODE + ' · ' + name;
+      document.getElementById('selector-screen').classList.add('hidden');
+      document.getElementById('editor-screen').classList.remove('hidden');
+      document.getElementById('tabs-bar').style.display = 'flex';
+      document.getElementById('save-load-bar').style.display = 'flex';
+      switchTab('build');
+      renderSections();
+      const savedDate = payload.savedAt ? new Date(payload.savedAt).toLocaleString() : 'unknown time';
+      setTimeout(() => alert(`Progress loaded successfully!\nSaved: ${savedDate}\n\nYou can now pick up where the previous person left off.`), 100);
+    } catch(err) {
+      alert('Could not read this file. Make sure you selected a valid progress .json file.');
+    }
+  };
+  reader.readAsText(file);
+  // Reset input so same file can be loaded again if needed
+  event.target.value = '';
 }
 
 // ---- TEMPLATE HELPERS ----
