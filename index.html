@@ -347,15 +347,8 @@ function buildTemplate(taskCode) {
     locked(`${p}-525`,`Take a photo showing the ${m} plugged in or connected to the electric panel.`,525,'2',{mandatory:1,mandatoryImage:1}),
     locked(`${p}-530`,`Take a photo of the condensate drain location for the ${m}.`,530,'2',{mandatory:1,mandatoryImage:1}),
     edit('535',535), edit('540',540), edit('545',545), edit('550',550), edit('555',555),
-    // Post-Inspection PNNL
-    locked(`${p}-700`,'Post-Inspection PNNL Section',700,'1'),
-    locked(`${p}-705`,'Does the Ambient CO Test Pass? (PNNL)',705,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
-    locked(`${p}-710`,'Has an ASHRAE 62.2 calculation been performed pre and post retrofit to ensure indoor air quality? (PNNL)',710,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
-    locked(`${p}-715`,'Do Natural Draft Appliances pass worst case draft testing? (Vent Testing PNNL)',715,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
-    locked(`${p}-720`,'Does the Gas Leakage Detection Test Pass? (PNNL)',720,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
-    locked(`${p}-725`,'Does the Spillage Test Pass? (PNNL)',725,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
-    locked(`${p}-730`,'Does the Undiluted CO Test Pass? (PNNL)',730,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
-    locked(`${p}-735`,'Does the Venting Test Pass? (PNNL)',735,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
+    // Post Installation
+    locked(`${p}-700`,'Post Installation Section',700,'1'),
     edit('740',740), edit('745',745), edit('750',750), edit('755',755), edit('760',760),
     // Signature
     locked(`${p}-900`,'Signature & Approvals Section',900,'1'),
@@ -430,16 +423,8 @@ function buildPVITemplate(taskCode) {
     locked(`${p}-515`,`Take a photo of the newly installed ${m}.`,51,'2',{mandatory:1,mandatoryImage:1}),
     locked(`${p}-525`,`Take a photo showing the ${m} plugged in or connected to the electric panel.`,52,'2',{mandatory:1,mandatoryImage:1}),
     edit('530',53), edit('535',54), edit('540',55), edit('545',56), edit('550',57),
-    // Post-Inspection PNNL
-    locked(`${p}-600`,'Post-Inspection PNNL Section',58,'1'),
-    locked(`${p}-605`,'Does the Ambient CO Test Pass? (PNNL)',59,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
-    locked(`${p}-610`,'Has an ASHRAE 62.2 calculation been performed pre and post retrofit to ensure indoor air quality? (PNNL)',60,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
-    locked(`${p}-615`,'Do Natural Draft Appliances pass worst case draft testing? (Vent Testing PNNL)',61,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
-    locked(`${p}-620`,'Does the Gas Leakage Detection Test Pass? (PNNL)',62,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
-    locked(`${p}-625`,'Does the Spillage Test Pass? (PNNL)',63,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
-    locked(`${p}-630`,'Does the Undiluted CO Test Pass? (PNNL)',64,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
-    locked(`${p}-635`,'Does the Venting Test Pass? (PNNL)',65,'2',{mandatory:1,autosuggest:'NAPASSEDFAILEDWARNING',isAOButtons:1}),
-    locked(`${p}-640`,'If a Total External Static Pressure Test was performed, record the result. (PNWL)',66,'2',{mandatory:1,mandatoryObs:1,hide:1}),
+    // Post Installation
+    locked(`${p}-600`,'Post Installation Section',58,'1'),
     edit('645',67), edit('650',68), edit('655',69), edit('660',70), edit('665',71),
     // Signature
     locked('12-SGN-05-V-25','Signature & Approvals Section',72,'1'),
