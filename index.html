@@ -139,6 +139,19 @@
   .save-btn:hover { background: #1a3a2a; color: #a0c4b0; border-color: #5bc88a; }
   .save-load-hint { font-size: 11px; color: #3a6a50; margin-left: 4px; font-family: 'DM Mono', monospace; }
   .load-input { display: none; }
+
+  /* HOME DROP ZONE */
+  .home-divider { display: flex; align-items: center; text-align: center; margin: 28px 0 18px; color: var(--text3); font-size: 11px; font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: 0.06em; }
+  .home-divider::before, .home-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .home-divider span { padding: 0 14px; }
+  .dropzone { border: 2px dashed var(--border); border-radius: 12px; padding: 30px 24px; text-align: center; cursor: pointer; transition: all 0.15s; background: var(--surface); }
+  .dropzone:hover { border-color: var(--accent2); background: var(--surface2); }
+  .dropzone.dragover { border-color: var(--accent2); background: var(--accent-light); }
+  .dropzone-icon { font-size: 28px; margin-bottom: 10px; opacity: 0.85; }
+  .dropzone-text { font-size: 14px; color: var(--text); margin-bottom: 4px; }
+  .dropzone-text strong { font-weight: 600; }
+  .dropzone-sub { font-size: 12px; color: var(--text2); }
+  .dropzone-sub code { font-family: 'DM Mono', monospace; background: var(--surface2); padding: 1px 5px; border-radius: 4px; font-size: 11px; }
 </style>
 </head>
 <body>
@@ -206,6 +219,18 @@
       </div>
     </div>
     <button class="selector-btn" id="start-btn" disabled onclick="startEditor()">Start &#8594;</button>
+
+    <div class="home-divider"><span>or pick up where someone left off</span></div>
+    <div id="home-dropzone" class="dropzone"
+         onclick="document.getElementById('home-load-input').click()"
+         ondragover="event.preventDefault(); this.classList.add('dragover');"
+         ondragleave="this.classList.remove('dragover');"
+         ondrop="handleHomeDrop(event)">
+      <div class="dropzone-icon">&#128194;</div>
+      <div class="dropzone-text"><strong>Drop a saved progress file here</strong></div>
+      <div class="dropzone-sub">or click to browse &middot; accepts a <code>.json</code> progress file</div>
+      <input type="file" id="home-load-input" class="load-input" accept=".json" onchange="loadProgress(event)" />
+    </div>
   </div>
 
   <!-- EDITOR -->
@@ -559,7 +584,25 @@ function saveProgress() {
 
 function loadProgress(event) {
   const file = event.target.files[0];
+  // Reset input so the same file can be loaded again if needed
+  event.target.value = '';
+  readProgressFile(file);
+}
+
+function handleHomeDrop(event) {
+  event.preventDefault();
+  const dz = document.getElementById('home-dropzone');
+  if (dz) dz.classList.remove('dragover');
+  const file = event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0];
+  readProgressFile(file);
+}
+
+function readProgressFile(file) {
   if (!file) return;
+  if (!file.name.toLowerCase().endsWith('.json')) {
+    alert('Please choose a .json progress file.');
+    return;
+  }
   const reader = new FileReader();
   reader.onload = function(e) {
     try {
@@ -602,8 +645,6 @@ function loadProgress(event) {
     }
   };
   reader.readAsText(file);
-  // Reset input so same file can be loaded again if needed
-  event.target.value = '';
 }
 
 // ---- TEMPLATE HELPERS ----
