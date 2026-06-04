@@ -467,7 +467,7 @@ let TEMPLATE_TYPE = 'Q'; // 'Q' = QCON, 'V' = PVI
 let state = {};
 let unlockedState = {};
 let addedItems = {};
-const openSections = new Set([0]);
+const openSections = new Set();
 
 // ---- SELECTOR ----
 function onSelectChange() {
@@ -531,7 +531,6 @@ function startEditor() {
   // Clear validation state
   Object.keys(validationErrors).forEach(k => delete validationErrors[k]);
   openSections.clear();
-  openSections.add(0);
 
   TEMPLATE.filter(t => t.isEdit).forEach(t => {
     state[t.code] = {label:'',typeId:'2',mandatory:1,mandatoryImage:0,mandatoryObs:0,autosuggest:'',visibilityFormula:'',hide:0};
@@ -621,7 +620,6 @@ function readProgressFile(file) {
       addedItems = payload.addedItems || {};
       Object.keys(validationErrors).forEach(k => delete validationErrors[k]);
       openSections.clear();
-      openSections.add(0);
       // Make sure any edit slots not in saved state get defaults
       TEMPLATE.filter(t => t.isEdit).forEach(t => {
         if (!state[t.code]) state[t.code] = {label:'',typeId:'2',mandatory:1,mandatoryImage:0,mandatoryObs:0,autosuggest:'',visibilityFormula:'',hide:0};
